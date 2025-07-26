@@ -1,0 +1,54 @@
+{
+  "name": "flash-sight-app",
+  "version": "1.0.0",
+  "description": "Application de lecture bionique basée sur Chromium pour sites web et PDFs",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "keywords": [
+    "bionic reading",
+    "lecture",
+    "pdf",
+    "web browser",
+    "accessibility"
+  ],
+  "author": "Votre Nom",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^37.2.4",
+    "electron-builder": "^25.2.4"
+  },
+  "dependencies": {
+    "electron-pdf-window": "^1.0.12",
+    "pdf-parse": "^1.1.1"
+  },
+  "build": {
+    "appId": "com.bionicreader.app",
+    "productName": "Bionic Reader",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "src/**/*",
+      "assets/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png"
+    }
+  }
+}

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash Sight Reader App</title>
+    <!-- Polices optimisées pour la lecture -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Lato:wght@400;700&family=Roboto:wght@400;500&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Barre de titre similaire à VS Code -->
+        <div id="title-bar">
+            <div class="title-bar-left">
+                <button id="sidebarToggle" class="icon-button" title="Basculer la barre latérale">☰</button>
+                <div class="app-icon">🧠+⚡</div>
+                <span class="app-title">Flash Sight Reader</span>
+            </div>
+            <div class="title-bar-center">
+                <!-- Les URLs sont maintenant dans chaque onglet -->
+            </div>
+            <div class="title-bar-right">
+                <button id="refreshButton" class="icon-button" title="Actualiser">↻</button>
+                <button id="backButton" class="icon-button" title="Précédent">←</button>
+                <button id="forwardButton" class="icon-button" title="Suivant">→</button>
+            </div>
+        </div>
+
+        <!-- Container principal style VS Code -->
+        <div id="main-container">
+            <!-- Sidebar gauche -->
+            <div id="sidebar" class="collapsed">
+                <div class="sidebar-content">
+                    <div class="sidebar-header">
+                        <h3>Contrôles</h3>
+                    </div>
+                
+                <!-- Section Flash Sight -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <span class="section-icon">⚡</span>
+                        <span class="section-title">Flash Sight</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="control-group">
+                            <label class="control-label">
+                                <input type="checkbox" id="bionicToggle" checked />
+                                <span>Activé</span>
+                            </label>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">
+                                <input type="checkbox" id="cleanModeToggle" />
+                                <span>Mode lecture épuré</span>
+                            </label>
+                            <small style="color: var(--vscode-text-muted); font-size: 11px;">Supprime images, CSS et distractions</small>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Intensité:</label>
+                            <div class="slider-container">
+                                <input type="range" id="intensitySlider" min="0.1" max="0.8" step="0.1" value="0.5" />
+                                <span id="intensityValue" class="value-display">50%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Police -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <span class="section-icon">🔤</span>
+                        <span class="section-title">Police de Lecture</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="control-group">
+                            <label class="control-label">
+                                <input type="checkbox" id="fontOptimizeToggle" />
+                                <span>Optimiser la police</span>
+                            </label>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Police:</label>
+                            <select id="fontSelect" class="font-select">
+                                <option value="system">Système (Segoe UI)</option>
+                                <option value="arial">Arial</option>
+                                <option value="opensans">Open Sans</option>
+                                <option value="lato">Lato</option>
+                                <option value="roboto">Roboto</option>
+                                <option value="merriweather">Merriweather</option>
+                                <option value="georgia">Georgia</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Taille:</label>
+                            <div class="slider-container">
+                                <input type="range" id="fontSizeSlider" min="12" max="24" step="1" value="16" />
+                                <span id="fontSizeValue" class="value-display">16px</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Zoom -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <span class="section-icon">🔍</span>
+                        <span class="section-title">Zoom</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="control-group">
+                            <label class="control-label">Niveau de zoom:</label>
+                            <div class="slider-container">
+                                <input type="range" id="zoomSlider" min="0.5" max="3" step="0.1" value="1" />
+                                <span id="zoomValue" class="value-display">100%</span>
+                            </div>
+                        </div>
+                        <div class="zoom-buttons">
+                            <button id="zoomInButton" class="secondary-button">🔍+ Zoom +</button>
+                            <button id="zoomOutButton" class="secondary-button">🔍- Zoom -</button>
+                            <button id="zoomResetButton" class="secondary-button">↻ Reset</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Fichiers -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <span class="section-icon">📁</span>
+                        <span class="section-title">Fichiers</span>
+                    </div>
+                    <div class="section-content">
+                        <button id="openPdfButton" class="secondary-button">📄 Ouvrir PDF</button>
+                        <button id="openUrlButton" class="secondary-button">🌐 Ouvrir URL</button>
+                    </div>
+                </div>
+
+                <!-- Section Debug -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <span class="section-icon">🔧</span>
+                        <span class="section-title">Debug</span>
+                    </div>
+                    <div class="section-content">
+                        <button id="toggleConsoleButton" class="secondary-button">📟 Console DevTools</button>
+                        <small style="color: var(--vscode-text-muted); font-size: 11px; display: block; margin-top: 4px;">Ouvre/ferme la console de débogage</small>
+                    </div>
+                </div>
+                </div>
+            </div>
+
+            <!-- Zone de contenu principal -->
+            <div id="editor-area">
+                <!-- Onglets style VS Code -->
+                <div id="tab-bar">
+                    <div class="tab-add" id="addTabButton" title="Nouvel onglet">
+                        <span>+</span>
+                    </div>
+                </div>
+
+                <!-- Zone de contenu -->
+                <div id="content">
+                    <!-- Conteneur pour tous les onglets -->
+                    <div id="tabs-container">
+                        <!-- Les onglets seront créés dynamiquement -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dialogue d'entrée d'URL -->
+        <div id="url-dialog" class="dialog" style="display: none;">
+            <div class="dialog-content">
+                <h3>Entrer une URL</h3>
+                <input type="url" id="dialog-url-input" placeholder="https://exemple.com" />
+                <div class="dialog-buttons">
+                    <button id="dialog-ok">OK</button>
+                    <button id="dialog-cancel">Annuler</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="flash-sight-engine.js"></script>
+    <script src="test-injection.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
