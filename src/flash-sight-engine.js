@@ -3,11 +3,56 @@
  * Transforme le texte en appliquant la méthode de lecture Flash Sight
  */
 
+/**
+ * LRU Cache simple pour les transformations de mots
+ */
+class LRUCache {
+    /**
+     * @param {number} maxSize - Nombre maximum d'entrées dans le cache
+     */
+    constructor(maxSize = 5000) {
+        this.maxSize = maxSize;
+        this.cache = new Map();
+    }
+
+    get(key) {
+        if (!this.cache.has(key)) return undefined;
+        const value = this.cache.get(key);
+        // Move to end (most recently used)
+        this.cache.delete(key);
+        this.cache.set(key, value);
+        return value;
+    }
+
+    set(key, value) {
+        if (this.cache.has(key)) {
+            this.cache.delete(key);
+        } else if (this.cache.size >= this.maxSize) {
+            // Remove least recently used
+            const firstKey = this.cache.keys().next().value;
+            this.cache.delete(firstKey);
+        }
+        this.cache.set(key, value);
+    }
+
+    clear() {
+        this.cache.clear();
+    }
+
+    stats() {
+        return {
+            size: this.cache.size,
+            maxSize: this.maxSize
+        };
+    }
+}
+
 class FlashSightEngine {
     constructor() {
         this.intensity = 0.5; // Intensité par défaut (50%)
         this.isEnabled = true;
         this.minWordLength = 2; // Longueur minimale des mots à traiter
+        this.wordCache = new LRUCache(5000);
     }
 
     /**
@@ -49,28 +94,45 @@ class FlashSightEngine {
             boldLength = Math.ceil(word.length * 0.4); // 40% pour les mots moyens
         } else if (word.length <= 12) {
             boldLength = Math.ceil(word.length * 0.35); // 35% pour les mots longs
-        } else {
-            boldLength = Math.ceil(word.length * 0.3); // 30% pour les très longs mots
-        }
-        
-        // Appliquer l'intensité utilisateur comme modificateur
-        const intensityModifier = (this.intensity - 0.5) * 0.6; // Modificateur plus prononcé
-        boldLength = Math.round(boldLength + (boldLength * intensityModifier));
-        
-        // Contraintes finales : au moins 1 caractère en gras, mais pas tout le mot
-        boldLength = Math.max(1, Math.min(word.length - 1, boldLength));
-        
-        return boldLength;
-    }
 
     /**
-     * Transforme un mot en appliquant le Flash Sight
-     * @param {string} word - Le mot à transformer
-     * @returns {string} - Le mot transformé en HTML
+     * Transforme le contenu d'une page web
+     * @param {Document} doc - Le document à transformer
      */
-    transformWord(word) {
-        if (!this.isEnabled) {
-            return word;
+    transformWebpage(doc) {
+        if (!this.isEnabled) return;
+
+        // Vérifier si la page a déjà été transformée
+        if (doc.body.hasAttribute('data-flashsight-transformed')) {
+            console.log('Page already transformed, skipping...');
+            return;
+        }
+
+        // Nettoyer les transformations précédentes
+        this.cleanElement(doc.body);
+
+        // Marquer la page comme transformée
+        doc.body.setAttribute('data-flashsight-transformed', 'true');
+
+        // Sélecteurs des éléments de contenu principal
+        const contentSelectors = [
+            'article', 'main', '.content', '.post', '.article',
+            'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+            'li', 'td', 'th', 'blockquote', 'div'
+        ];
+
+        contentSelectors.forEach(selector => {
+            const elements = doc.querySelectorAll(selector);
+            elements.forEach(element => {
+                if (!element.hasAttribute('data-flashsight-processed') &&
+                    ((element.children.length === 0) ||
+                    (element.children.length > 0 && element.textContent.trim().length > 0))) {
+                    this.transformElement(element, false);
+                    element.setAttribute('data-flashsight-processed', 'true');
+                }
+            });
+        });
+    }
         }
 
         // Regex améliorée pour extraire le mot principal en gérant mieux la ponctuation
@@ -104,85 +166,42 @@ class FlashSightEngine {
      * @param {string} text - Le texte à transformer
      * @returns {string} - Le texte transformé
      */
-    transformParagraph(text) {
-        if (!this.isEnabled) return text;
-
-        // Utiliser une approche plus simple et fiable
-        // Diviser le texte en préservant les espaces avec split et filter
-        const words = text.split(/(\s+)/);
-        
-        return words.map(word => {
-            // Si c'est un espace ou uniquement des espaces, le retourner tel quel
-            if (/^\s+$/.test(word)) {
-                return word;
-            }
-            
-            // Si c'est un mot (contient des caractères non-espaces), le transformer
-            if (word.trim().length > 0) {
-                return this.transformWord(word);
-            }
-            
+    transformWord(word) {
+        if (!this.isEnabled) {
             return word;
-        }).join('');
-    }
-
-    /**
-     * Transforme un élément HTML en appliquant le Flash Sight
-     * @param {HTMLElement} element - L'élément à transformer
-     * @param {boolean} recursive - Si true, traite récursivement les enfants
-     */
-    transformElement(element, recursive = true) {
-        if (!this.isEnabled) return;
-
-        // Éléments à ignorer
-        const ignoredTags = ['SCRIPT', 'STYLE', 'CODE', 'PRE', 'TEXTAREA', 'INPUT'];
-        if (ignoredTags.includes(element.tagName)) {
-            return;
         }
 
-        // Traiter les nœuds de texte
-        const walker = document.createTreeWalker(
-            element,
-            NodeFilter.SHOW_TEXT,
-            {
-                acceptNode: (node) => {
-                    // Ignorer les nœuds de texte dans des éléments spéciaux
-                    const parent = node.parentElement;
-                    if (parent && ignoredTags.includes(parent.tagName)) {
-                        return NodeFilter.FILTER_REJECT;
-                    }
-                    // Ignorer les nœuds de texte vides ou composés uniquement d'espaces
-                    if (!node.textContent.trim()) {
-                        return NodeFilter.FILTER_REJECT;
-                    }
-                    return NodeFilter.FILTER_ACCEPT;
-                }
-            }
-        );
-
-        const textNodes = [];
-        let node;
-        while (node = walker.nextNode()) {
-            textNodes.push(node);
+        // Regex améliorée pour extraire le mot principal en gérant mieux la ponctuation
+        const wordMatch = word.match(/^(\W*)([\w']+)(\W*)$/);
+        if (!wordMatch) {
+            return word; // Pas un mot valide, retourner tel quel
         }
 
-        // Transformer chaque nœud de texte
-        textNodes.forEach(textNode => {
-            const originalText = textNode.textContent;
-            const transformedText = this.transformParagraph(originalText);
-            
-            if (transformedText !== originalText) {
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = transformedText;
-                
-                // Remplacer le nœud de texte par les nouveaux éléments
-                const parent = textNode.parentNode;
-                while (tempDiv.firstChild) {
-                    parent.insertBefore(tempDiv.firstChild, textNode);
-                }
-                parent.removeChild(textNode);
-            }
-        });
+        const [, prefix, cleanWord, suffix] = wordMatch;
+        // Vérifier la longueur minimale
+        if (cleanWord.length < this.minWordLength) {
+            return word;
+        }
+
+        // Clé de cache = mot + intensité
+        const cacheKey = `${cleanWord}|${this.intensity}`;
+        const cached = this.wordCache.get(cacheKey);
+        if (cached !== undefined) {
+            // On recompose avec la ponctuation d'origine
+            return `${prefix}${cached}${suffix}`;
+        }
+
+        let boldLength = this.calculateBoldLength(cleanWord);
+        if (boldLength === 0 || boldLength >= cleanWord.length) {
+            return word;
+        }
+
+        const boldPart = cleanWord.substring(0, boldLength);
+        const normalPart = cleanWord.substring(boldLength);
+        const result = `<span class=\"flashsight-word\"><span class=\"flashsight-bold\">${boldPart}</span><span class=\"flashsight-normal\">${normalPart}</span></span>`;
+        this.wordCache.set(cacheKey, result);
+        // On recompose avec la ponctuation d'origine
+        return `${prefix}${result}${suffix}`;
     }
 
     /**
@@ -209,6 +228,63 @@ class FlashSightEngine {
      * Transforme le contenu d'une page web
      * @param {Document} doc - Le document à transformer
      */
+    transformWord(word) {
+        if (!this.isEnabled) {
+            return word;
+        }
+
+        // Regex améliorée pour extraire le mot principal en gérant mieux la ponctuation
+        const wordMatch = word.match(/^(\W*)([\w']+)(\W*)$/);
+        if (!wordMatch) {
+            return word; // Pas un mot valide, retourner tel quel
+        }
+
+        const [, prefix, cleanWord, suffix] = wordMatch;
+        // Vérifier la longueur minimale
+        if (cleanWord.length < this.minWordLength) {
+            return word;
+        }
+
+        // Clé de cache = mot + intensité
+        const cacheKey = `${cleanWord}|${this.intensity}`;
+        const cached = this.wordCache.get(cacheKey);
+        if (cached !== undefined) {
+            // On recompose avec la ponctuation d'origine
+            return `${prefix}${cached}${suffix}`;
+        }
+
+        const boldLength = this.calculateBoldLength(cleanWord);
+        if (boldLength === 0 || boldLength >= cleanWord.length) {
+            return word;
+        }
+
+        const boldPart = cleanWord.substring(0, boldLength);
+        const normalPart = cleanWord.substring(boldLength);
+        const result = `<span class=\"flashsight-word\"><span class=\"flashsight-bold\">${boldPart}</span><span class=\"flashsight-normal\">${normalPart}</span></span>`;
+        this.wordCache.set(cacheKey, result);
+        // On recompose avec la ponctuation d'origine
+        return `${prefix}${result}${suffix}`;
+    }
+    /**
+     * Réinitialise le cache des transformations de mots
+     */
+    resetCache() {
+        this.wordCache.clear();
+    }
+
+    /**
+     * Statistiques du cache
+     * @returns {Object}
+     */
+
+    getCacheStats() {
+        return this.wordCache.stats();
+    }
+
+    /**
+     * Transforme le contenu d'une page web
+     * @param {Document} doc - Le document à transformer
+     */
     transformWebpage(doc) {
         if (!this.isEnabled) return;
 
@@ -225,25 +301,23 @@ class FlashSightEngine {
         doc.body.setAttribute('data-flashsight-transformed', 'true');
 
         // Sélecteurs des éléments de contenu principal
-        const contentSelectors = [
+        var contentSelectors = [
             'article', 'main', '.content', '.post', '.article',
             'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
             'li', 'td', 'th', 'blockquote', 'div'
         ];
 
-        contentSelectors.forEach(selector => {
-            const elements = doc.querySelectorAll(selector);
-            elements.forEach(element => {
-                // Éviter de traiter les éléments qui contiennent d'autres éléments de contenu
-                // et qui n'ont pas déjà été transformés
-                if (!element.hasAttribute('data-flashsight-processed') && 
-                    (element.children.length === 0 || 
+        contentSelectors.forEach(function(selector) {
+            var elements = doc.querySelectorAll(selector);
+            elements.forEach(function(element) {
+                if (!element.hasAttribute('data-flashsight-processed') &&
+                    ((element.children.length === 0) ||
                     (element.children.length > 0 && element.textContent.trim().length > 0))) {
                     this.transformElement(element, false);
                     element.setAttribute('data-flashsight-processed', 'true');
                 }
-            });
-        });
+            }.bind(this));
+        }.bind(this));
     }
 
     /**
