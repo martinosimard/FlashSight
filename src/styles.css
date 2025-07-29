@@ -48,6 +48,50 @@ body {
     height: 100vh;
 }
 
+body.theme-dark {
+    --vscode-bg: #1e1e1e;
+    --vscode-sidebar-bg: #252526;
+    --vscode-titlebar-bg: #3c3c3c;
+    --vscode-border: #464647;
+    --vscode-text: #cccccc;
+    --vscode-text-secondary: #9d9d9d;
+    --vscode-text-muted: #6a6a6a;
+    --vscode-accent: #007acc;
+    --vscode-accent-hover: #0e639c;
+    --vscode-button-bg: #0e639c;
+    --vscode-button-hover: #1177bb;
+    --vscode-input-bg: #3c3c3c;
+    --vscode-input-border: #464647;
+    --vscode-tab-active: #1e1e1e;
+    --vscode-tab-inactive: #2d2d30;
+    --vscode-statusbar: #007acc;
+    --vscode-success: #4ec9b0;
+    --vscode-warning: #ffcc02;
+    --vscode-error: #f48771;
+}
+
+body.theme-contrast {
+    --vscode-bg: #000000;
+    --vscode-sidebar-bg: #111111;
+    --vscode-titlebar-bg: #222222;
+    --vscode-border: #ffffff;
+    --vscode-text: #ffffff;
+    --vscode-text-secondary: #ffff00;
+    --vscode-text-muted: #cccccc;
+    --vscode-accent: #ffcc00;
+    --vscode-accent-hover: #ffea00;
+    --vscode-button-bg: #ffcc00;
+    --vscode-button-hover: #ffea00;
+    --vscode-input-bg: #222222;
+    --vscode-input-border: #ffffff;
+    --vscode-tab-active: #000000;
+    --vscode-tab-inactive: #222222;
+    --vscode-statusbar: #ffcc00;
+    --vscode-success: #00ff00;
+    --vscode-warning: #ffcc00;
+    --vscode-error: #ff0000;
+}
+
 #app {
     display: flex;
     flex-direction: column;

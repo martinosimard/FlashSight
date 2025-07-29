@@ -318,6 +318,27 @@ class FlashSightReaderApp {
         // Rendre accessible globalement pour le TabManager
         window.flashSightApp = this;
 
+        // Détection du mode sombre/contraste élevé
+        this.applySystemAccessibilityPreferences();
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => this.applySystemAccessibilityPreferences());
+        window.matchMedia('(prefers-contrast: more)').addEventListener('change', () => this.applySystemAccessibilityPreferences());
+    }
+
+    applySystemAccessibilityPreferences() {
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const isHighContrast = window.matchMedia('(prefers-contrast: more)').matches;
+        const body = document.body;
+        if (isDark) {
+            body.classList.add('theme-dark');
+        } else {
+            body.classList.remove('theme-dark');
+        }
+        if (isHighContrast) {
+            body.classList.add('theme-contrast');
+        } else {
+            body.classList.remove('theme-contrast');
+        }
+
     }
 
     initializeElements() {
@@ -384,7 +405,9 @@ class FlashSightReaderApp {
                 currentTab.webview.goBack();
             }
         });
+
         
+
         this.forwardButton.addEventListener('click', () => {
             const currentTab = this.tabManager.getCurrentTab();
             if (currentTab && currentTab.webview) {

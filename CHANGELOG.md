@@ -34,7 +34,16 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **Console de Debug** : Logs automatiques et métriques détaillées
 - **Alertes Performance** : Notifications automatiques si opération >100ms
 
+
 ### 🧠 Amélioré
+
+#### Accessibilité & UX
+- **Détection des préférences système** : Adaptation automatique au mode sombre, contraste élevé ou préférences d’accessibilité de l’OS.
+- **Mode lecture lente** : Option pour ralentir l’animation ou désactiver certains effets pour les utilisateurs dyslexiques ou malvoyants.
+- **Navigation clavier améliorée** : Focus visible, tabulation logique et raccourcis accessibles pour tous les contrôles.
+- **Compatibilité lecteurs d’écran** : Ajout d’`aria-label`, rôles et structure sémantique pour une meilleure prise en charge par les lecteurs d’écran.
+- **Ajustement dynamique de la taille du texte** : Possibilité d’agrandir/réduire la taille du texte sans casser la mise en page FlashSight.
+- **Contraste renforcé** : Palette de couleurs alternatives pour garantir un contraste suffisant sur tous les éléments interactifs.
 
 #### Moteur FlashSight
 - **Cache Système** : Implémentation d'un cache intelligent (1000 entrées)

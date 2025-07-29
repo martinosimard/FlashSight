@@ -1,7 +1,3 @@
-/**
- * Moteur de Flash Sight
- * Transforme le texte en appliquant la méthode de lecture Flash Sight
- */
 
 /**
  * LRU Cache simple pour les transformations de mots
@@ -78,93 +74,28 @@ class FlashSightEngine {
      */
     calculateBoldLength(word) {
         if (word.length < this.minWordLength) return 0;
-        
         // Règles Flash Sight optimisées et plus cohérentes
-        let boldLength;
-        
         if (word.length === 1) {
-            boldLength = 0; // Un seul caractère : pas de transformation
+            return 0;
         } else if (word.length === 2) {
-            boldLength = 1; // Deux caractères : premier en gras
+            return 1;
         } else if (word.length === 3) {
-            boldLength = Math.ceil(word.length * 0.4); // ~1-2 caractères
+            return Math.ceil(word.length * 0.4);
         } else if (word.length <= 5) {
-            boldLength = Math.ceil(word.length * 0.5); // 50% pour les mots courts
+            return Math.ceil(word.length * 0.5);
         } else if (word.length <= 8) {
-            boldLength = Math.ceil(word.length * 0.4); // 40% pour les mots moyens
+            return Math.ceil(word.length * 0.4);
         } else if (word.length <= 12) {
-            boldLength = Math.ceil(word.length * 0.35); // 35% pour les mots longs
-
-    /**
-     * Transforme le contenu d'une page web
-     * @param {Document} doc - Le document à transformer
-     */
-    transformWebpage(doc) {
-        if (!this.isEnabled) return;
-
-        // Vérifier si la page a déjà été transformée
-        if (doc.body.hasAttribute('data-flashsight-transformed')) {
-            console.log('Page already transformed, skipping...');
-            return;
+            return Math.ceil(word.length * 0.35);
+        } else {
+            return Math.ceil(word.length * this.intensity);
         }
-
-        // Nettoyer les transformations précédentes
-        this.cleanElement(doc.body);
-
-        // Marquer la page comme transformée
-        doc.body.setAttribute('data-flashsight-transformed', 'true');
-
-        // Sélecteurs des éléments de contenu principal
-        const contentSelectors = [
-            'article', 'main', '.content', '.post', '.article',
-            'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-            'li', 'td', 'th', 'blockquote', 'div'
-        ];
-
-        contentSelectors.forEach(selector => {
-            const elements = doc.querySelectorAll(selector);
-            elements.forEach(element => {
-                if (!element.hasAttribute('data-flashsight-processed') &&
-                    ((element.children.length === 0) ||
-                    (element.children.length > 0 && element.textContent.trim().length > 0))) {
-                    this.transformElement(element, false);
-                    element.setAttribute('data-flashsight-processed', 'true');
-                }
-            });
-        });
-    }
-        }
-
-        // Regex améliorée pour extraire le mot principal en gérant mieux la ponctuation
-        const wordMatch = word.match(/^(\W*)([\w']+)(\W*)$/);
-        if (!wordMatch) {
-            return word; // Pas un mot valide, retourner tel quel
-        }
-
-        const [, prefix, cleanWord, suffix] = wordMatch;
-        
-        // Vérifier la longueur minimale
-        if (cleanWord.length < this.minWordLength) {
-            return word;
-        }
-
-        const boldLength = this.calculateBoldLength(cleanWord);
-        
-        if (boldLength === 0 || boldLength >= cleanWord.length) {
-            return word;
-        }
-
-        const boldPart = cleanWord.substring(0, boldLength);
-        const normalPart = cleanWord.substring(boldLength);
-
-        // Retourner le mot transformé avec la ponctuation préservée
-        return `${prefix}<span class="flashsight-word"><span class="flashsight-bold">${boldPart}</span><span class="flashsight-normal">${normalPart}</span></span>${suffix}`;
     }
 
     /**
-     * Transforme un paragraphe en appliquant le Flash Sight
-     * @param {string} text - Le texte à transformer
-     * @returns {string} - Le texte transformé
+     * Transforme un mot en appliquant le Flash Sight
+     * @param {string} word - Le mot à transformer
+     * @returns {string} - Le mot transformé
      */
     transformWord(word) {
         if (!this.isEnabled) {
@@ -191,7 +122,7 @@ class FlashSightEngine {
             return `${prefix}${cached}${suffix}`;
         }
 
-        let boldLength = this.calculateBoldLength(cleanWord);
+        const boldLength = this.calculateBoldLength(cleanWord);
         if (boldLength === 0 || boldLength >= cleanWord.length) {
             return word;
         }
@@ -225,47 +156,6 @@ class FlashSightEngine {
     }
 
     /**
-     * Transforme le contenu d'une page web
-     * @param {Document} doc - Le document à transformer
-     */
-    transformWord(word) {
-        if (!this.isEnabled) {
-            return word;
-        }
-
-        // Regex améliorée pour extraire le mot principal en gérant mieux la ponctuation
-        const wordMatch = word.match(/^(\W*)([\w']+)(\W*)$/);
-        if (!wordMatch) {
-            return word; // Pas un mot valide, retourner tel quel
-        }
-
-        const [, prefix, cleanWord, suffix] = wordMatch;
-        // Vérifier la longueur minimale
-        if (cleanWord.length < this.minWordLength) {
-            return word;
-        }
-
-        // Clé de cache = mot + intensité
-        const cacheKey = `${cleanWord}|${this.intensity}`;
-        const cached = this.wordCache.get(cacheKey);
-        if (cached !== undefined) {
-            // On recompose avec la ponctuation d'origine
-            return `${prefix}${cached}${suffix}`;
-        }
-
-        const boldLength = this.calculateBoldLength(cleanWord);
-        if (boldLength === 0 || boldLength >= cleanWord.length) {
-            return word;
-        }
-
-        const boldPart = cleanWord.substring(0, boldLength);
-        const normalPart = cleanWord.substring(boldLength);
-        const result = `<span class=\"flashsight-word\"><span class=\"flashsight-bold\">${boldPart}</span><span class=\"flashsight-normal\">${normalPart}</span></span>`;
-        this.wordCache.set(cacheKey, result);
-        // On recompose avec la ponctuation d'origine
-        return `${prefix}${result}${suffix}`;
-    }
-    /**
      * Réinitialise le cache des transformations de mots
      */
     resetCache() {
@@ -276,7 +166,6 @@ class FlashSightEngine {
      * Statistiques du cache
      * @returns {Object}
      */
-
     getCacheStats() {
         return this.wordCache.stats();
     }
@@ -334,7 +223,7 @@ class FlashSightEngine {
         return paragraphs.map(paragraph => {
             if (paragraph.trim()) {
                 const transformedParagraph = this.transformParagraph(paragraph.trim());
-                return `<p class="flashsight-text">${transformedParagraph}</p>`;
+                return `<p class=\"flashsight-text\">${transformedParagraph}</p>`;
             }
             return '';
         }).join('\n');
