@@ -27,9 +27,6 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   - Notifications visuelles pour les opérations
 - **Module d'Optimisation** (`performance-optimizer.js`) : Système de gestion centralisé des performances
   - Cache intelligent pour les transformations FlashSight
-  - Gestion automatique de la mémoire avec garbage collection
-  - Debouncing et throttling des opérations coûteuses
-  - Auto-optimisation périodique (toutes les 30 secondes)
 
 #### Outils de Développement
 - **API de Performance** : `window.flashSightEngine.getPerformanceMetrics()`

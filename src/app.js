@@ -317,6 +317,7 @@ class FlashSightReaderApp {
         
         // Rendre accessible globalement pour le TabManager
         window.flashSightApp = this;
+
     }
 
     initializeElements() {
