@@ -47,8 +47,51 @@ class FlashSightEngine {
     constructor() {
         this.intensity = 0.5; // Intensité par défaut (50%)
         this.isEnabled = true;
-        this.minWordLength = 2; // Longueur minimale des mots à traiter
+        this.minWordLength = 1; // Longueur minimale des mots à traiter
         this.wordCache = new LRUCache(5000);
+        
+        // Configuration par défaut selon les spécifications
+        this.algorithmConfig = "- 0 1 1 2 0.4";
+        this.parsedConfig = this.parseAlgorithmConfig(this.algorithmConfig);
+        
+        // Mots communs anglais à ignorer quand le mode est '-'
+        this.commonWords = new Set([
+            'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from',
+            'has', 'he', 'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the',
+            'to', 'was', 'will', 'with', 'or', 'but', 'if', 'you', 'we', 'i'
+        ]);
+    }
+
+    /**
+     * Parse la configuration de l'algorithme selon les spécifications
+     * Format: "- 0 1 1 2 0.4" ou "+ 0 1 1 2 0.4"
+     * @param {string} config - La chaîne de configuration
+     * @returns {Object} - Configuration parsée
+     */
+    parseAlgorithmConfig(config) {
+        const parts = config.trim().split(/\s+/);
+        if (parts.length < 6) {
+            throw new Error('Configuration invalide. Format attendu: "- 0 1 1 2 0.4"');
+        }
+        
+        return {
+            highlightCommonWords: parts[0] === '+', // '+' = highlight common words, '-' = skip them
+            length1: parseInt(parts[1]), // Nombre de caractères à surligner pour les mots de 1 caractère
+            length2: parseInt(parts[2]), // Nombre de caractères à surligner pour les mots de 2 caractères
+            length3: parseInt(parts[3]), // Nombre de caractères à surligner pour les mots de 3 caractères
+            length4: parseInt(parts[4]), // Nombre de caractères à surligner pour les mots de 4 caractères
+            fractionLonger: parseFloat(parts[5]) // Fraction pour les mots de 5+ caractères
+        };
+    }
+
+    /**
+     * Met à jour la configuration de l'algorithme
+     * @param {string} config - Nouvelle configuration
+     */
+    setAlgorithmConfig(config) {
+        this.algorithmConfig = config;
+        this.parsedConfig = this.parseAlgorithmConfig(config);
+        this.resetCache(); // Vider le cache car l'algorithme a changé
     }
 
     /**
@@ -68,27 +111,37 @@ class FlashSightEngine {
     }
 
     /**
-     * Calcule le nombre de caractères à mettre en gras selon l'intensité
+     * Calcule le nombre de caractères à mettre en gras selon les spécifications
      * @param {string} word - Le mot à analyser
      * @returns {number} - Nombre de caractères à mettre en gras
      */
     calculateBoldLength(word) {
-        if (word.length < this.minWordLength) return 0;
-        // Règles Flash Sight optimisées et plus cohérentes
-        if (word.length === 1) {
+        const config = this.parsedConfig;
+        const cleanWord = word.toLowerCase();
+        
+        // Vérifier si c'est un mot commun et si on doit l'ignorer
+        if (!config.highlightCommonWords && this.commonWords.has(cleanWord)) {
             return 0;
-        } else if (word.length === 2) {
-            return 1;
-        } else if (word.length === 3) {
-            return Math.ceil(word.length * 0.4);
-        } else if (word.length <= 5) {
-            return Math.ceil(word.length * 0.5);
-        } else if (word.length <= 8) {
-            return Math.ceil(word.length * 0.4);
-        } else if (word.length <= 12) {
-            return Math.ceil(word.length * 0.35);
-        } else {
-            return Math.ceil(word.length * this.intensity);
+        }
+        
+        const length = word.length;
+        
+        // Appliquer les règles selon la longueur du mot
+        switch (length) {
+            case 1:
+                return config.length1;
+            case 2:
+                return config.length2;
+            case 3:
+                return config.length3;
+            case 4:
+                return config.length4;
+            default:
+                // Pour les mots de 5+ caractères, utiliser la fraction
+                if (length >= 5) {
+                    return Math.ceil(length * config.fractionLonger);
+                }
+                return 0;
         }
     }
 
@@ -114,8 +167,8 @@ class FlashSightEngine {
             return word;
         }
 
-        // Clé de cache = mot + intensité
-        const cacheKey = `${cleanWord}|${this.intensity}`;
+        // Clé de cache = mot + configuration
+        const cacheKey = `${cleanWord}|${this.algorithmConfig}`;
         const cached = this.wordCache.get(cacheKey);
         if (cached !== undefined) {
             // On recompose avec la ponctuation d'origine
@@ -156,6 +209,14 @@ class FlashSightEngine {
     }
 
     /**
+     * Obtient la configuration actuelle de l'algorithme
+     * @returns {string} - Configuration actuelle
+     */
+    getAlgorithmConfig() {
+        return this.algorithmConfig;
+    }
+
+    /**
      * Réinitialise le cache des transformations de mots
      */
     resetCache() {
@@ -179,8 +240,7 @@ class FlashSightEngine {
 
         // Vérifier si la page a déjà été transformée
         if (doc.body.hasAttribute('data-flashsight-transformed')) {
-            console.log('Page already transformed, skipping...');
-            return;
+            return; // Page already transformed, skipping
         }
 
         // Nettoyer les transformations précédentes
@@ -260,17 +320,33 @@ class FlashSightEngine {
     }
 
     /**
-     * Fonction de debug pour tester l'algorithme
+     * Fonction de debug pour tester l'algorithme selon les spécifications
      * @param {string} text - Texte à tester
      * @returns {Array} - Résultats du test
      */
     debugTransform(text) {
         const words = text.split(/\s+/);
         return words.map(word => {
-            const cleanWord = word.replace(/[^\w]/g, '');
+            const wordMatch = word.match(/^(\W*)([\w']+)(\W*)$/);
+            if (!wordMatch) {
+                return {
+                    original: word,
+                    clean: word,
+                    length: 0,
+                    boldLength: 0,
+                    bold: '',
+                    normal: word,
+                    ratio: '0%',
+                    isCommonWord: false,
+                    skipped: true
+                };
+            }
+
+            const [, prefix, cleanWord, suffix] = wordMatch;
             const boldLength = this.calculateBoldLength(cleanWord);
             const boldPart = cleanWord.substring(0, boldLength);
             const normalPart = cleanWord.substring(boldLength);
+            const isCommonWord = this.commonWords.has(cleanWord.toLowerCase());
             
             return {
                 original: word,
@@ -279,9 +355,34 @@ class FlashSightEngine {
                 boldLength: boldLength,
                 bold: boldPart,
                 normal: normalPart,
-                ratio: (boldLength / cleanWord.length * 100).toFixed(1) + '%'
+                ratio: cleanWord.length > 0 ? (boldLength / cleanWord.length * 100).toFixed(1) + '%' : '0%',
+                isCommonWord: isCommonWord,
+                skipped: isCommonWord && !this.parsedConfig.highlightCommonWords
             };
         });
+    }
+
+    /**
+     * Teste l'algorithme avec différentes configurations
+     * @param {string} text - Texte à tester
+     * @param {string} config - Configuration à utiliser (optionnel)
+     * @returns {Object} - Résultats du test avec la configuration
+     */
+    testAlgorithm(text, config = null) {
+        if (config) {
+            const originalConfig = this.algorithmConfig;
+            this.setAlgorithmConfig(config);
+            const results = this.debugTransform(text);
+            this.setAlgorithmConfig(originalConfig);
+            return {
+                config: config,
+                results: results
+            };
+        }
+        return {
+            config: this.algorithmConfig,
+            results: this.debugTransform(text)
+        };
     }
 }
 

@@ -10,39 +10,36 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Lato:wght@400;700&family=Roboto:wght@400;500&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    
+    <!-- Modules FlashSight -->
+    <script src="modules/FlashSightStateManager.js"></script>
+    <script src="modules/LazyFlashSightTransform.js"></script>
+    <script src="modules/AccessibilityManager.js"></script>
+    <script src="modules/ImmersiveMode.js"></script>
+    <script src="modules/ReadingAnalytics.js"></script>
+    <script src="modules/ErrorHandler.js"></script>
+    <script src="modules/ThemeManager.js"></script>
+    <script src="modules/SimpleUrlHistory.js"></script>
+    <script src="modules/UrlHistoryDropdown.js"></script>
 </head>
 <body>
     <div id="app">
-        <!-- Barre de titre similaire à VS Code -->
-        <div id="title-bar">
-            <div class="title-bar-left">
-                <button id="sidebarToggle" class="icon-button" title="Basculer la barre latérale">☰</button>
-                <div class="app-icon">🧠</div>
-                <span class="app-title">Flash Sight Reader</span>
-            </div>
-            <div class="title-bar-center">
-                <!-- Les URLs sont maintenant dans chaque onglet -->
-            </div>
-            <div class="title-bar-right">
-                <button id="refreshButton" class="icon-button" title="Actualiser">↻</button>
-                <button id="backButton" class="icon-button" title="Précédent">←</button>
-                <button id="forwardButton" class="icon-button" title="Suivant">→</button>
-            </div>
-        </div>
-
         <!-- Container principal style VS Code -->
         <div id="main-container">
             <!-- Sidebar gauche -->
-            <div id="sidebar" class="collapsed">
+            <div id="sidebar">
                 <div class="sidebar-content">
                     <div class="sidebar-header">
                         <h3>Contrôles</h3>
                     </div>
-                <div class="sidebar-section">
-                    <div class="section-header">
-                        <span class="section-icon">♿</span>
+                
+                <details class="sidebar-section">
+                    <summary class="section-header">
+                        <span class="section-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </span>
                         <span class="section-title">Accessibilité</span>
-                    </div>
+                    </summary>
                     <div class="section-content">
                         <div class="control-group">
                             <label class="control-label">
@@ -50,16 +47,38 @@
                                 <span>Mode contraste renforcé</span>
                             </label>
                         </div>
+                        <div class="control-group">
+                            <label class="control-label">
+                                <input type="checkbox" id="immersiveModeToggle" />
+                                <span>Mode immersif</span>
+                            </label>
+                            <small>Masque l'interface pour la lecture (Ctrl+Alt+I)</small>
+                        </div>
                     </div>
-                </div>
+                </details>
+
+                <!-- Section Thème -->
+                <details class="sidebar-section">
+                    <summary class="section-header">
+                        <span class="section-icon">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l.34.34a10.26 10.26 0 0 1 4.33 4.33l.34.34a10.26 10.26 0 0 1-4.33 11.62l-.34.17-.34-.17a10.26 10.26 0 0 1-4.33-11.62l-.34-.34a10.26 10.26 0 0 1 4.33-4.33l.34-.34z"></path></svg>
+                        </span>
+                        <span class="section-title">Thème</span>
+                    </summary>
+                    <div class="section-content">
+                        <div id="theme-selector-container"></div>
+                    </div>
+                </details>
                 
 
                 <!-- Section Flash Sight -->
-                <div class="sidebar-section">
-                    <div class="section-header">
-                        <span class="section-icon">🧠</span>
+                <details class="sidebar-section">
+                    <summary class="section-header">
+                        <span class="section-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 12.5-3-3-3 3"></path><path d="M12 19.5v-7"></path><path d="M12 8.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"></path><path d="M12 2v1.5"></path><path d="m6.4 4.5-1 1"></path><path d="M19 5.5-1 1"></path></svg>
+                        </span>
                         <span class="section-title">Flash Sight</span>
-                    </div>
+                    </summary>
                     <div class="section-content">
                         <div class="control-group">
                             <label class="control-label">
@@ -72,7 +91,7 @@
                                 <input type="checkbox" id="cleanModeToggle" />
                                 <span>Mode lecture épuré</span>
                             </label>
-                            <small style="color: var(--vscode-text-muted); font-size: 11px;">Supprime images, CSS et distractions</small>
+                            <small>Supprime images, CSS et distractions</small>
                         </div>
                         <div class="control-group">
                             <label class="control-label">Intensité:</label>
@@ -81,15 +100,56 @@
                                 <span id="intensityValue" class="value-display">50%</span>
                             </div>
                         </div>
+                        <div class="control-group">
+                            <label class="control-label">
+                                <input type="checkbox" id="lazyLoadingToggle" checked />
+                                <span>Chargement adaptatif</span>
+                            </label>
+                            <small>Optimise les performances pour gros documents</small>
+                        </div>
                     </div>
-                </div>
+                </details>
+
+                <!-- Section Analytics -->
+                <details class="sidebar-section">
+                    <summary class="section-header">
+                        <span class="section-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+                        </span>
+                        <span class="section-title">Analytics Lecture</span>
+                    </summary>
+                    <div class="section-content">
+                        <div class="stat-item">
+                            <span class="stat-label">Temps de lecture:</span>
+                            <span id="readingTime" class="stat-value">0min</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Mots lus:</span>
+                            <span id="wordsRead" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Vitesse (mpm):</span>
+                            <span id="readingSpeed" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Efficacité:</span>
+                            <span id="readingEfficiency" class="stat-value">0%</span>
+                        </div>
+                        <div class="control-group">
+                            <button id="resetAnalyticsButton" class="secondary-button">🔄 Reset Session</button>
+                            <button id="exportAnalyticsButton" class="secondary-button">📤 Export</button>
+                        </div>
+                    </div>
+                </details>
 
                 <!-- Section Statistiques Cache FlashSight -->
-                <div class="sidebar-section">
-                    <div class="section-header">
-                        <span class="section-icon">📊</span>
+                <details class="sidebar-section">
+                    <summary class="section-header">
+                        <span class="section-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg>
+                        </span>
                         <span class="section-title">Cache FlashSight</span>
-                    </div>
+                    </summary>
                     <div class="section-content">
                         <div class="control-group">
                             <span id="cacheStats">Cache: ...</span>
@@ -98,14 +158,16 @@
                             <button id="resetCacheButton" class="secondary-button">🧹 Vider le cache</button>
                         </div>
                     </div>
-                </div>
+                </details>
 
                 <!-- Section Police -->
-                <div class="sidebar-section">
-                    <div class="section-header">
-                        <span class="section-icon">🔤</span>
+                <details class="sidebar-section">
+                    <summary class="section-header">
+                        <span class="section-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"></path><path d="M9 20h6"></path><path d="M12 4v16"></path></svg>
+                        </span>
                         <span class="section-title">Police de Lecture</span>
-                    </div>
+                    </summary>
                     <div class="section-content">
                         <div class="control-group">
                             <label class="control-label">
@@ -133,14 +195,16 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </details>
 
                 <!-- Section Zoom -->
-                <div class="sidebar-section">
-                    <div class="section-header">
-                        <span class="section-icon">🔍</span>
+                <details class="sidebar-section">
+                    <summary class="section-header">
+                        <span class="section-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path><path d="M8 11h6"></path></svg>
+                        </span>
                         <span class="section-title">Zoom</span>
-                    </div>
+                    </summary>
                     <div class="section-content">
                         <div class="control-group">
                             <label class="control-label">Niveau de zoom:</label>
@@ -155,38 +219,51 @@
                             <button id="zoomResetButton" class="secondary-button">↻ Reset</button>
                         </div>
                     </div>
-                </div>
+                </details>
 
                 <!-- Section Fichiers -->
-                <div class="sidebar-section">
-                    <div class="section-header">
-                        <span class="section-icon">📁</span>
+                <details class="sidebar-section">
+                    <summary class="section-header">
+                        <span class="section-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        </span>
                         <span class="section-title">Fichiers</span>
-                    </div>
+                    </summary>
                     <div class="section-content">
                         <button id="openPdfButton" class="secondary-button">📄 Ouvrir PDF</button>
                         <button id="openUrlButton" class="secondary-button">🌐 Ouvrir URL</button>
                     </div>
-                </div>
+                </details>
 
                 <!-- Section Debug -->
-                <div class="sidebar-section">
-                    <div class="section-header">
-                        <span class="section-icon">🔧</span>
+                <details class="sidebar-section">
+                    <summary class="section-header">
+                        <span class="section-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-4.44a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.36"></path><path d="M18 22V12.5a4.5 4.5 0 0 1 4.5-4.5H21"></path><path d="m16 16-4-4 4-4"></path></svg>
+                        </span>
                         <span class="section-title">Debug</span>
-                    </div>
+                    </summary>
                     <div class="section-content">
                         <button id="toggleConsoleButton" class="secondary-button">📟 Console DevTools</button>
-                        <small style="color: var(--vscode-text-muted); font-size: 11px; display: block; margin-top: 4px;">Ouvre/ferme la console de débogage</small>
+                        <small>Ouvre/ferme la console de débogage</small>
                     </div>
-                </div>
+                </details>
                 </div>
             </div>
 
             <!-- Zone de contenu principal -->
             <div id="editor-area">
-                <!-- Onglets style VS Code -->
+                <!-- Barre d'onglets style VS Code -->
                 <div id="tab-bar">
+                    <div class="tabbar-leading">
+                        <button id="sidebarToggle" class="icon-button" role="button" aria-pressed="false" aria-label="Afficher/masquer la barre latérale" title="Afficher/masquer la barre latérale (Ctrl+B)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="3" y1="6" x2="21" y2="6"></line>
+                                <line x1="3" y1="12" x2="21" y2="12"></line>
+                                <line x1="3" y1="18" x2="21" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
                     <div class="tab-add" id="addTabButton" title="Nouvel onglet">
                         <span>+</span>
                     </div>
@@ -194,6 +271,26 @@
 
                 <!-- Zone de contenu -->
                 <div id="content">
+                    <!-- Modèle pour la barre d'outils de l'onglet -->
+                    <template id="tab-toolbar-template">
+                        <div class="tab-toolbar">
+                            <button class="icon-button back-button" title="Précédent">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline></svg>
+                            </button>
+                            <button class="icon-button forward-button" title="Suivant">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </button>
+                            <button class="icon-button refresh-button" title="Actualiser">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                            </button>
+                             <button class="icon-button home-button" title="Accueil">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                            </button>
+                            <input type="text" class="tab-url-input" placeholder="Entrez une URL (ex: google.com) ou cliquez ici pour voir l'historique...">
+                            <button class="tab-go-button">Go</button>
+                        </div>
+                    </template>
+
                     <!-- Conteneur pour tous les onglets -->
                     <div id="tabs-container">
                         <!-- Les onglets seront créés dynamiquement -->
@@ -216,7 +313,6 @@
     </div>
 
     <script src="flash-sight-engine.js"></script>
-    <script src="test-injection.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

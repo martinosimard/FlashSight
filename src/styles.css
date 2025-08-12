@@ -31,6 +31,344 @@
     --vscode-button-background: #0e639c;
     --vscode-button-foreground: #ffffff;
     --vscode-button-hoverBackground: #1177bb;
+
+    /* Variables de thème - seront écrasées par ThemeManager */
+    --theme-background: var(--vscode-bg);
+    --theme-surface: var(--vscode-sidebar-bg);
+    --theme-primary: var(--vscode-accent);
+    --theme-text: var(--vscode-text);
+    --theme-border: var(--vscode-border);
+    --theme-transition: all 0.3s ease;
+}
+
+/* Styles pour les icônes SVG */
+.icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    padding: 6px;
+    color: var(--vscode-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 28px;
+    min-height: 28px;
+}
+
+.icon-button:hover {
+    background: var(--vscode-input-bg);
+    color: var(--vscode-text);
+}
+
+.icon-button:active {
+    background: var(--vscode-border);
+    transform: scale(0.95);
+}
+
+.icon-button svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    pointer-events: none;
+}
+
+/* Style spécifique pour le bouton burger (sidebar toggle) */
+#sidebarToggle {
+    margin-right: 4px;
+}
+
+#sidebarToggle[aria-pressed="true"] {
+    background: var(--vscode-accent);
+    color: white;
+}
+
+#sidebarToggle[aria-pressed="true"]:hover {
+    background: var(--vscode-accent-hover);
+}
+
+/* Styles pour les icônes de la barre d'onglets */
+.tabbar-leading {
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+}
+
+.tabbar-leading .icon-button {
+    margin-right: 0;
+}
+
+.section-icon svg {
+    width: 16px;
+    height: 16px;
+    stroke: var(--vscode-text-secondary);
+    transition: stroke 0.2s ease;
+    fill: none;
+}
+
+.section-header:hover .section-icon svg {
+    stroke: var(--vscode-text);
+}
+
+/* Styles pour les nouvelles fonctionnalités */
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 12px;
+}
+
+.stat-label {
+    color: var(--vscode-text-secondary);
+}
+
+.stat-value {
+    color: var(--vscode-text);
+    font-weight: 500;
+}
+
+.stat-value.updating {
+    color: var(--vscode-accent);
+    animation: pulse 0.3s ease;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Styles pour les notifications */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 4px;
+    color: white;
+    font-weight: bold;
+    z-index: 10000;
+    animation: slideInNotification 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.notification-success { 
+    background: var(--vscode-success); 
+}
+
+.notification-error { 
+    background: var(--vscode-error); 
+}
+
+.notification-info { 
+    background: var(--vscode-accent); 
+}
+
+.notification-warning { 
+    background: var(--vscode-warning); 
+    color: #000;
+}
+
+@keyframes slideInNotification {
+    from { 
+        transform: translateX(100%); 
+        opacity: 0; 
+    }
+    to { 
+        transform: translateX(0); 
+        opacity: 1; 
+    }
+}
+
+/* Styles pour les thèmes */
+.theme-transition {
+    transition: var(--theme-transition);
+}
+
+.theme-light {
+    --vscode-bg: #ffffff;
+    --vscode-sidebar-bg: #f3f3f3;
+    --vscode-titlebar-bg: #dddddd;
+    --vscode-border: #e1e1e1;
+    --vscode-text: #333333;
+    --vscode-text-secondary: #666666;
+    --vscode-text-muted: #999999;
+    --vscode-input-bg: #ffffff;
+    --vscode-input-border: #d0d0d0;
+    --vscode-tab-active: #ffffff;
+    --vscode-tab-inactive: #ececec;
+    color-scheme: light;
+}
+
+.theme-dark {
+    color-scheme: dark;
+}
+
+.theme-high-contrast {
+    --vscode-bg: #000000;
+    --vscode-sidebar-bg: #000000;
+    --vscode-text: #ffffff;
+    --vscode-accent: #ffff00;
+    --vscode-border: #ffffff;
+    filter: contrast(150%);
+}
+
+.theme-reading {
+    --vscode-bg: #f4f3e8;
+    --vscode-sidebar-bg: #ebe8d8;
+    --vscode-text: #5d4e37;
+    --vscode-accent: #8b4513;
+    filter: sepia(10%);
+}
+
+/* Mode dégradé */
+.degraded-mode {
+    /* Filtrage plus subtil */
+    filter: grayscale(5%);
+}
+
+.degraded-mode::before {
+    content: "Mode dégradé temporaire - Cliquez pour désactiver";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: var(--vscode-warning);
+    color: #000;
+    text-align: center;
+    padding: 4px;
+    font-size: 11px;
+    z-index: 9999;
+    opacity: 0.9;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.degraded-mode::before:hover {
+    opacity: 1;
+    background: #ffb74d;
+}
+
+/* Styles pour le mode immersif */
+.immersive-mode #sidebar {
+    display: none !important;
+}
+
+.immersive-mode #tab-bar {
+    display: none !important;
+}
+
+.immersive-mode .tab-toolbar {
+    display: none !important;
+}
+
+/* Contrôles immersifs flottants */
+.immersive-controls {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    background: rgba(30, 30, 30, 0.9);
+    border-radius: 8px;
+    padding: 12px;
+    backdrop-filter: blur(10px);
+    transition: opacity 0.3s ease;
+    opacity: 0.7;
+    border: 1px solid var(--vscode-border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.immersive-controls:hover {
+    opacity: 1;
+}
+
+.immersive-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.immersive-btn {
+    background: var(--vscode-button-bg);
+    border: none;
+    border-radius: 4px;
+    color: white;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    min-width: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.immersive-btn:hover {
+    background: var(--vscode-button-hover);
+    transform: scale(1.05);
+}
+
+.immersive-intensity {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.immersive-intensity input[type="range"] {
+    width: 80px;
+    height: 4px;
+    background: var(--vscode-input-bg);
+    border-radius: 2px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.immersive-intensity input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    background: var(--vscode-accent);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.immersive-intensity span {
+    color: var(--vscode-text);
+    font-size: 11px;
+    min-width: 30px;
+}
+
+/* Classe utilitaire pour les lecteurs d'écran */
+.sr-only {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Améliorations de focus pour l'accessibilité */
+.focus-visible,
+*:focus-visible {
+    outline: 2px solid var(--vscode-accent) !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 4px rgba(0, 122, 204, 0.3) !important;
+}
+
+.theme-high-contrast .focus-visible,
+.theme-high-contrast *:focus-visible {
+    outline: 3px solid #ffff00 !important;
+    background-color: #000000 !important;
+    color: #ffffff !important;
 }
 
 /* Reset et base */
@@ -98,103 +436,6 @@ body.theme-contrast {
     height: 100vh;
 }
 
-/* Barre de titre */
-#title-bar {
-    background: var(--vscode-titlebar-bg);
-    border-bottom: 1px solid var(--vscode-border);
-    height: 35px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 12px;
-    font-size: 13px;
-    -webkit-app-region: drag;
-}
-
-.title-bar-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.app-icon {
-    font-size: 16px;
-}
-
-.app-title {
-    font-weight: 600;
-    color: var(--vscode-text);
-}
-
-.title-bar-center {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    max-width: 500px;
-    margin: 0 20px;
-}
-
-.url-input-container {
-    display: flex;
-    width: 100%;
-    max-width: 400px;
-    -webkit-app-region: no-drag;
-}
-
-.title-bar-right {
-    display: flex;
-    gap: 4px;
-    -webkit-app-region: no-drag;
-}
-
-.icon-button {
-    background: transparent;
-    border: none;
-    color: var(--vscode-text-secondary);
-    padding: 4px 8px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.2s ease;
-}
-
-.icon-button:hover {
-    background: var(--vscode-input-bg);
-    color: var(--vscode-text);
-}
-
-/* Input URL dans la barre de titre */
-#urlInput {
-    flex: 1;
-    background: var(--vscode-input-bg);
-    border: 1px solid var(--vscode-input-border);
-    border-radius: 3px 0 0 3px;
-    color: var(--vscode-text);
-    padding: 6px 10px;
-    font-size: 13px;
-    outline: none;
-}
-
-#urlInput:focus {
-    border-color: var(--vscode-accent);
-    box-shadow: 0 0 0 1px var(--vscode-accent);
-}
-
-#goButton {
-    background: var(--vscode-button-bg);
-    border: none;
-    color: white;
-    padding: 6px 12px;
-    border-radius: 0 3px 3px 0;
-    cursor: pointer;
-    font-size: 12px;
-    transition: background 0.2s ease;
-}
-
-#goButton:hover {
-    background: var(--vscode-button-hover);
-}
-
 /* Container principal */
 #main-container {
     flex: 1;
@@ -210,18 +451,16 @@ body.theme-contrast {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    transition: width 0.3s ease, min-width 0.3s ease;
+    transition: width 0.3s ease, min-width 0.3s ease, transform 0.3s ease;
+    flex-shrink: 0;
 }
 
 #sidebar.collapsed {
-    width: 0 !important;
-    min-width: 0 !important;
-    border-right: none !important;
-    overflow: hidden !important;
-}
-
-#sidebar.collapsed .sidebar-content {
-    display: none !important;
+    width: 0;
+    min-width: 0;
+    border-right: none;
+    transform: translateX(-300px);
+    overflow: hidden;
 }
 
 .sidebar-header {
@@ -245,20 +484,38 @@ body.theme-contrast {
     padding: 12px 16px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     background: var(--vscode-sidebar-bg);
     cursor: pointer;
     transition: background 0.2s ease;
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
+    list-style: none; /* Hide the default marker */
+}
+.section-header::-webkit-details-marker {
+    display: none; /* For Chrome/Safari */
 }
 
 .section-header:hover {
     background: var(--vscode-input-bg);
 }
 
+.section-header::after {
+    content: '▶';
+    margin-left: auto;
+    font-size: 10px;
+    transition: transform 0.2s ease;
+    color: var(--vscode-text-muted);
+}
+
+details[open] .section-header::after {
+    transform: rotate(90deg);
+}
+
 .section-icon {
     font-size: 16px;
+    display: flex;
+    align-items: center;
 }
 
 .section-title {
@@ -274,6 +531,13 @@ body.theme-contrast {
     margin-bottom: 12px;
 }
 
+.control-group small {
+    color: var(--vscode-text-muted);
+    font-size: 11px;
+    display: block;
+    margin-top: 4px;
+}
+
 .control-label {
     display: flex;
     align-items: center;
@@ -286,6 +550,7 @@ body.theme-contrast {
 
 .control-label input[type="checkbox"] {
     margin: 0;
+    accent-color: var(--vscode-accent);
 }
 
 .slider-container {
@@ -302,6 +567,8 @@ body.theme-contrast {
     border-radius: 2px;
     outline: none;
     -webkit-appearance: none;
+    appearance: none;
+    accent-color: var(--vscode-accent);
 }
 
 .slider-container input[type="range"]::-webkit-slider-thumb {
@@ -312,6 +579,10 @@ body.theme-contrast {
     background: var(--vscode-accent);
     border-radius: 50%;
     cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.slider-container input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
 }
 
 .value-display {
@@ -414,11 +685,13 @@ body.theme-contrast {
 /* Barre d'onglets */
 #tab-bar {
     display: flex;
-    background: var(--vscode-tab-inactive);
-    border-bottom: 1px solid var(--vscode-border);
+    background: var(--vscode-titlebar-bg);
+    border-bottom: 2px solid var(--vscode-border);
     height: 35px;
     overflow-x: auto;
     overflow-y: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .tab {
@@ -428,6 +701,7 @@ body.theme-contrast {
     padding: 0 12px;
     background: var(--vscode-tab-inactive);
     border-right: 1px solid var(--vscode-border);
+    border-top: 1px solid transparent;
     cursor: pointer;
     font-size: 13px;
     color: var(--vscode-text-secondary);
@@ -436,17 +710,24 @@ body.theme-contrast {
     min-width: 120px;
     overflow: hidden;
     position: relative;
+    margin-top: 2px;
+    border-radius: 4px 4px 0 0;
 }
 
 .tab:hover {
     background: var(--vscode-input-bg);
     color: var(--vscode-text);
+    border-top: 1px solid var(--vscode-border);
+    margin-top: 1px;
 }
 
 .tab.active {
     background: var(--vscode-tab-active);
     color: var(--vscode-text);
-    border-bottom: 2px solid var(--vscode-accent);
+    border-bottom: 3px solid var(--vscode-accent);
+    border-top: 1px solid var(--vscode-accent);
+    margin-top: 0px;
+    box-shadow: 0 -2px 4px rgba(0, 122, 204, 0.2);
 }
 
 .tab-icon {
@@ -485,18 +766,27 @@ body.theme-contrast {
     align-items: center;
     justify-content: center;
     width: 35px;
-    background: var(--vscode-tab-inactive);
+    background: var(--vscode-titlebar-bg);
     border-right: 1px solid var(--vscode-border);
     cursor: pointer;
     font-size: 16px;
     color: var(--vscode-text-secondary);
     transition: all 0.2s ease;
     flex-shrink: 0;
+    border-radius: 0;
+    border: none;
+    border-right: 1px solid var(--vscode-border);
 }
 
 .tab-add:hover {
     background: var(--vscode-input-bg);
     color: var(--vscode-text);
+    transform: scale(1.05);
+}
+
+.tab-add:active {
+    background: var(--vscode-border);
+    transform: scale(0.95);
 }
 
 /* Zone de contenu */
@@ -528,60 +818,147 @@ body.theme-contrast {
     display: flex;
 }
 
-/* Barre d'URL dans les onglets */
-.tab-url-bar {
+/* Barre d'URL et d'outils dans les onglets */
+.tab-toolbar {
     display: flex;
     align-items: center;
-    padding: 8px 16px;
-    background: var(--vscode-editor-background);
-    border-bottom: 1px solid var(--vscode-panel-border);
-    gap: 8px;
+    padding: 6px 10px;
+    background: var(--vscode-sidebar-bg);
+    border-bottom: 1px solid var(--vscode-border);
+    gap: 6px;
     flex-shrink: 0;
+}
+
+.tab-toolbar .icon-button {
+    padding: 6px;
+    background: transparent;
+    border: none;
+    border-radius: 3px;
+    color: var(--vscode-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    min-height: 28px;
+}
+
+.tab-toolbar .icon-button:hover {
+    background: var(--vscode-input-bg);
+    color: var(--vscode-text);
+}
+
+.tab-toolbar .icon-button:active {
+    background: var(--vscode-border);
+    transform: scale(0.95);
+}
+
+.tab-toolbar .icon-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.tab-toolbar .icon-button:disabled:hover {
+    background: transparent;
+    color: var(--vscode-text-secondary);
+    transform: none;
+}
+
+.tab-toolbar .icon-button svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    pointer-events: none;
 }
 
 .tab-url-input {
     flex: 1;
-    padding: 8px 12px;
+    padding: 6px 10px;
     border: 1px solid var(--vscode-input-border);
-    border-radius: 4px;
-    background: var(--vscode-input-background);
+    border-radius: 3px;
+    background: var(--vscode-input-bg);
     color: var(--vscode-input-foreground);
-    font-size: 14px;
+    font-size: 13px;
     outline: none;
 }
 
 .tab-url-input:focus {
     border-color: var(--vscode-focusBorder);
+    box-shadow: 0 0 0 1px var(--vscode-focusBorder);
 }
 
-.tab-type-select {
-    padding: 8px 12px;
-    border: 1px solid var(--vscode-input-border);
-    border-radius: 4px;
-    background: var(--vscode-dropdown-background);
-    color: var(--vscode-dropdown-foreground);
-    font-size: 14px;
-    outline: none;
-    width: 120px;
+.tab-url-input:focus::placeholder {
+    color: var(--vscode-text-muted);
+    opacity: 0.8;
 }
 
-.tab-type-select:focus {
-    border-color: var(--vscode-focusBorder);
+.tab-url-input:empty,
+.tab-url-input[value=""] {
+    font-style: normal;
 }
 
 .tab-go-button {
-    padding: 8px 16px;
+    padding: 6px 12px;
     border: none;
-    border-radius: 4px;
+    border-radius: 3px;
     background: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
     cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 13px;
 }
 
 .tab-go-button:hover {
     background: var(--vscode-button-hoverBackground);
+}
+
+/* Dropdown d'historique */
+.url-history-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--vscode-sidebar-bg);
+    border: 1px solid var(--vscode-border);
+    border-radius: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.history-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--vscode-border);
+    color: var(--vscode-text);
+    font-size: 13px;
+    transition: background-color 0.2s ease;
+}
+
+.history-item:last-child {
+    border-bottom: none;
+}
+
+.history-item:hover {
+    background-color: var(--vscode-accent);
+}
+
+.history-item-title {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-item-url {
+    font-size: 11px;
+    color: var(--vscode-text-secondary);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .webview-container {
@@ -776,18 +1153,67 @@ body.theme-contrast {
     #sidebar {
         width: 200px;
     }
-    
-    .title-bar-center {
-        display: none;
-    }
 }
 
-/* Animations */
+/* Animations et états globaux */
 .tab,
 .icon-button,
 .primary-button,
 .secondary-button {
     transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Style global pour tous les boutons avec icônes */
+button[class*="button"] {
+    outline: none;
+    border: none;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+button[class*="button"]:focus-visible {
+    box-shadow: 0 0 0 2px var(--vscode-focusBorder);
+    outline: none;
+}
+
+/* Styles pour les zones d'interaction des boutons */
+.icon-button,
+.tab-add {
+    position: relative;
+    overflow: hidden;
+}
+
+.icon-button::before,
+.tab-add::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: currentColor;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.icon-button:hover::before,
+.tab-add:hover::before {
+    opacity: 0.1;
+}
+
+.icon-button:active::before,
+.tab-add:active::before {
+    opacity: 0.2;
+}
+
+/* Amélioration des SVG pour une meilleure qualité d'affichage */
+svg {
+    shape-rendering: geometricPrecision;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 /* États de chargement */
