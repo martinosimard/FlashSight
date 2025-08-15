@@ -425,10 +425,8 @@ class PDFViewer {
         console.log('Chargement du contenu pour:', pdfUrl);
         
         try {
-            // Si c'est un de nos fichiers de test, on charge le contenu réel
-            if (pdfUrl.endsWith('.txt') || pdfUrl.endsWith('.md') || 
-                pdfUrl === 'test-flashsight.txt' || pdfUrl === 'test-flashsight-2.txt' ||
-                pdfUrl === 'document-a.md' || pdfUrl === 'document-b.md') {
+            // Si c'est un de nos fichiers texte, on charge le contenu réel
+            if (pdfUrl.endsWith('.txt') || pdfUrl.endsWith('.md')) {
                 
                 console.log('Tentative de chargement du fichier:', pdfUrl);
                 const response = await fetch(pdfUrl);

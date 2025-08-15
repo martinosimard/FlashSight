@@ -45,12 +45,7 @@ class TabManager {
             url.toLowerCase().endsWith('.pdf') || 
             url.toLowerCase().includes('pdf') ||
             url.toLowerCase().endsWith('.txt') || 
-            url.toLowerCase().endsWith('.md') ||
-            url === 'test-document.pdf.html' ||
-            url === 'test-flashsight.txt' ||
-            url === 'test-flashsight-2.txt' ||
-            url === 'document-a.md' ||
-            url === 'document-b.md'
+            url.toLowerCase().endsWith('.md')
         ));
         
         const displayUrl = isWelcome ? '' : url;
@@ -88,6 +83,11 @@ class TabManager {
                 }, 100);
             });
         } else if (isPDF) {
+            // Ajouter une barre d'outils pour les PDFs aussi
+            const toolbarClone = this.toolbarTemplate.content.cloneNode(true);
+            toolbarClone.querySelector('.tab-url-input').value = displayUrl;
+            tabContent.appendChild(toolbarClone);
+            
             // Créer le PDF viewer intégré
             const pdfViewerContainer = document.createElement('div');
             pdfViewerContainer.className = 'pdf-viewer-container';
@@ -135,11 +135,14 @@ class TabManager {
 
         this.tabs.set(tabId, tab);
         
-        if (!isWelcome && !isPDF) {
+        // Configurer les listeners de la toolbar pour tous les onglets sauf la page d'accueil
+        if (!isWelcome) {
             this.setupTabToolbarListeners(tabContent, tabId);
-            if (tab.webview) {
-                window.flashSightApp.setupWebviewListeners(tab.webview, tabId);
-            }
+        }
+        
+        // Configurer les listeners WebView seulement pour les onglets web
+        if (!isWelcome && !isPDF && tab.webview) {
+            window.flashSightApp.setupWebviewListeners(tab.webview, tabId);
         }
 
         this.switchToTab(tabId);
@@ -378,9 +381,19 @@ class FlashSightReaderApp {
 
     initializeHistoryModules() {
         try {
-            this.urlHistory = this.createSimpleHistory();
-            this.historyDropdown = this.createHistoryDropdown();
+            // Utiliser les vrais modules d'historique
+            if (typeof SimpleUrlHistory !== 'undefined' && typeof UrlHistoryDropdown !== 'undefined') {
+                this.urlHistory = new SimpleUrlHistory(20);
+                this.historyDropdown = new UrlHistoryDropdown(this.urlHistory);
+                console.log('✅ Modules d\'historique initialisés avec succès');
+            } else {
+                // Fallback vers l'implémentation simple
+                this.urlHistory = this.createSimpleHistory();
+                this.historyDropdown = this.createHistoryDropdown();
+                console.warn('⚠️ Utilisation du fallback pour l\'historique');
+            }
         } catch (error) {
+            console.error('❌ Erreur lors de l\'initialisation de l\'historique:', error);
             // Historique modules loading error handled gracefully
         }
     }
@@ -494,8 +507,6 @@ class FlashSightReaderApp {
         this.intensitySlider = document.getElementById('intensitySlider');
         this.intensityValue = document.getElementById('intensityValue');
         this.openPdfButton = document.getElementById('openPdfButton');
-        this.testPdfButton = document.getElementById('testPdfButton');
-        this.testPdf2Button = document.getElementById('testPdf2Button');
         this.openUrlButton = document.getElementById('openUrlButton');
         this.toggleConsoleButton = document.getElementById('toggleConsoleButton');
         this.urlDialog = document.getElementById('url-dialog');
@@ -610,8 +621,6 @@ class FlashSightReaderApp {
         this.zoomResetButton?.addEventListener('click', () => this.updateZoom(0, true));
 
         this.openPdfButton.addEventListener('click', () => ipcRenderer.invoke('open-pdf-dialog'));
-        this.testPdfButton?.addEventListener('click', () => this.loadTestPDF());
-        this.testPdf2Button?.addEventListener('click', () => this.loadTestPDF2());
         this.openUrlButton.addEventListener('click', () => this.showUrlDialog());
         this.toggleConsoleButton.addEventListener('click', () => this.toggleDevConsole());
 
@@ -1361,24 +1370,6 @@ class FlashSightReaderApp {
         }
     }
     
-    /**
-     * Charge un PDF de test pour démonstration
-     */
-    loadTestPDF() {
-        console.log('Chargement du PDF de test #1');
-        const testPath = 'document-a.md';
-        this.tabManager.createNewTab(testPath, '📄 Document A', true);
-    }
-    
-    /**
-     * Charge un deuxième PDF de test pour démonstration
-     */
-    loadTestPDF2() {
-        console.log('Chargement du PDF de test #2');
-        const testPath = 'document-b.md';
-        this.tabManager.createNewTab(testPath, '📄 Document B', true);
-    }
-
     /**
      * Configure les abonnements aux changements d'état
      */
