@@ -1,6 +1,7 @@
 const { app, BrowserWindow, Menu, dialog, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const pdfParse = require('pdf-parse');
 
 let mainWindow;
 
@@ -76,6 +77,67 @@ ipcMain.handle('toggle-dev-console', async () => {
     return !isDevToolsOpened;
   }
   return false;
+});
+
+// Gestionnaire pour l'extraction de contenu PDF
+ipcMain.handle('extract-pdf-content', async (event, pdfUrl) => {
+  try {
+    console.log('Main process: Extraction PDF demandée pour:', pdfUrl);
+    
+    // Nettoyer le chemin du fichier
+    let filePath = pdfUrl;
+    if (filePath.startsWith('file://')) {
+      filePath = filePath.replace('file://', '');
+    }
+    
+    // Sur Windows, corriger les slashes
+    if (process.platform === 'win32') {
+      filePath = filePath.replace(/\//g, '\\');
+    }
+    
+    console.log('Main process: Chemin du fichier nettoyé:', filePath);
+    
+    // Vérifier que le fichier existe
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`Fichier PDF non trouvé: ${filePath}`);
+    }
+    
+    // Lire le fichier PDF
+    const pdfBuffer = fs.readFileSync(filePath);
+    console.log('Main process: Fichier PDF lu, taille:', pdfBuffer.length, 'bytes');
+    
+    // Extraire le texte avec pdf-parse
+    const pdfData = await pdfParse(pdfBuffer);
+    
+    // Nettoyer et formater le texte pour préserver la structure
+    let extractedText = pdfData.text;
+    
+    // Normaliser les sauts de ligne multiples en paragraphes
+    extractedText = extractedText
+      .replace(/\r\n/g, '\n')  // Normaliser les retours à la ligne Windows
+      .replace(/\r/g, '\n')    // Normaliser les retours à la ligne Mac
+      .replace(/\n{3,}/g, '\n\n')  // Réduire les multiples sauts de ligne
+      .replace(/([.!?])\s*\n([A-Z])/g, '$1\n\n$2')  // Ajouter des paragraphes après les phrases
+      .trim();
+    
+    console.log('Main process: Extraction réussie');
+    console.log('- Pages:', pdfData.numpages);
+    console.log('- Caractères extraits:', extractedText.length);
+    
+    return {
+      success: true,
+      text: extractedText,
+      numpages: pdfData.numpages,
+      fileSize: pdfBuffer.length
+    };
+    
+  } catch (error) {
+    console.error('Main process: Erreur lors de l\'extraction PDF:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
 });
 
 app.whenReady().then(createMainWindow);

@@ -37,11 +37,21 @@ class TabManager {
         this.createNewTab('welcome.html', 'Accueil');
     }
 
-    createNewTab(url = '', title = 'Nouvel onglet') {
+    createNewTab(url = '', title = 'Nouvel onglet', forcePDF = false) {
         const tabId = this.nextTabId++;
         
         const isWelcome = url === 'welcome.html';
-        const isPDF = !isWelcome && url && (url.toLowerCase().endsWith('.pdf') || url.toLowerCase().includes('pdf'));
+        const isPDF = forcePDF || (!isWelcome && url && (
+            url.toLowerCase().endsWith('.pdf') || 
+            url.toLowerCase().includes('pdf') ||
+            url.toLowerCase().endsWith('.txt') || 
+            url.toLowerCase().endsWith('.md') ||
+            url === 'test-document.pdf.html' ||
+            url === 'test-flashsight.txt' ||
+            url === 'test-flashsight-2.txt' ||
+            url === 'document-a.md' ||
+            url === 'document-b.md'
+        ));
         
         const displayUrl = isWelcome ? '' : url;
         const webviewUrl = url === '' ? 'about:blank' : url;
@@ -77,6 +87,24 @@ class TabManager {
                     }
                 }, 100);
             });
+        } else if (isPDF) {
+            // Créer le PDF viewer intégré
+            const pdfViewerContainer = document.createElement('div');
+            pdfViewerContainer.className = 'pdf-viewer-container';
+            pdfViewerContainer.id = `pdf-viewer-${tabId}`;
+            webviewContainer.appendChild(pdfViewerContainer);
+            
+            // Charger et initialiser le PDF viewer via l'instance globale
+            if (window.flashSightApp && window.flashSightApp.initializePDFViewer) {
+                window.flashSightApp.initializePDFViewer(pdfViewerContainer, url);
+            } else {
+                console.error('FlashSightApp non disponible pour initialiser le PDF viewer');
+                pdfViewerContainer.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: red;">
+                        Erreur: Application non initialisée
+                    </div>
+                `;
+            }
         } else {
             const toolbarClone = this.toolbarTemplate.content.cloneNode(true);
             toolbarClone.querySelector('.tab-url-input').value = displayUrl;
@@ -100,13 +128,14 @@ class TabManager {
             url: displayUrl,
             isPDF: isPDF,
             isWelcome: isWelcome,
-            webview: isWelcome ? null : tabContent.querySelector(`#webview-${tabId}`),
+            webview: (isWelcome || isPDF) ? null : tabContent.querySelector(`#webview-${tabId}`),
+            pdfViewer: isPDF ? tabContent.querySelector(`#pdf-viewer-${tabId}`) : null,
             contentEl: tabContent
         };
 
         this.tabs.set(tabId, tab);
         
-        if (!isWelcome) {
+        if (!isWelcome && !isPDF) {
             this.setupTabToolbarListeners(tabContent, tabId);
             if (tab.webview) {
                 window.flashSightApp.setupWebviewListeners(tab.webview, tabId);
@@ -259,7 +288,10 @@ class TabManager {
             container.innerHTML = `<iframe src="welcome.html" style="width: 100%; height: 100%; border: none;"></iframe>`;
             tab.webview = null;
         } else if (isPDF) {
-            container.innerHTML = `<iframe src="${finalUrl}" style="width: 100%; height: 100%; border: none; background: white;"></iframe>`;
+            // Utiliser le nouveau visualiseur PDF intégré
+            tab.pdfViewer = new PDFViewer(window.flashSightApp.stateManager, window.flashSightApp.themeManager);
+            tab.pdfViewer.createPDFContainer(tab.contentEl.querySelector('.webview-container'));
+            tab.pdfViewer.loadPDF(finalUrl);
             tab.webview = null;
         } else {
             const webview = document.createElement('webview');
@@ -462,6 +494,8 @@ class FlashSightReaderApp {
         this.intensitySlider = document.getElementById('intensitySlider');
         this.intensityValue = document.getElementById('intensityValue');
         this.openPdfButton = document.getElementById('openPdfButton');
+        this.testPdfButton = document.getElementById('testPdfButton');
+        this.testPdf2Button = document.getElementById('testPdf2Button');
         this.openUrlButton = document.getElementById('openUrlButton');
         this.toggleConsoleButton = document.getElementById('toggleConsoleButton');
         this.urlDialog = document.getElementById('url-dialog');
@@ -576,6 +610,8 @@ class FlashSightReaderApp {
         this.zoomResetButton?.addEventListener('click', () => this.updateZoom(0, true));
 
         this.openPdfButton.addEventListener('click', () => ipcRenderer.invoke('open-pdf-dialog'));
+        this.testPdfButton?.addEventListener('click', () => this.loadTestPDF());
+        this.testPdf2Button?.addEventListener('click', () => this.loadTestPDF2());
         this.openUrlButton.addEventListener('click', () => this.showUrlDialog());
         this.toggleConsoleButton.addEventListener('click', () => this.toggleDevConsole());
 
@@ -669,10 +705,10 @@ class FlashSightReaderApp {
                 }, 1000);
             }
             
-            // Mettre à jour les analytics avec le nouveau contenu (avec délai)
-            setTimeout(() => {
+            // Mettre à jour les analytics avec le nouveau contenu (avec attente intelligente)
+            this.waitForWebViewReady(webview, () => {
                 this.updateWebviewAnalytics(webview, tabId);
-            }, 2000);
+            });
         });
 
         // Réappliquer Flash Sight après navigation
@@ -736,8 +772,8 @@ class FlashSightReaderApp {
         // Écouter les événements du processus principal
         ipcRenderer.on('load-pdf', (event, filePath) => {
             const fileName = filePath.split('\\').pop().split('/').pop();
-            this.tabManager.createNewTab(`file://${filePath}`, fileName);
-            // L'historique sera ajouté automatiquement par navigateTab
+            // Créer un nouvel onglet avec le PDF viewer intégré
+            this.tabManager.createNewTab(filePath, fileName, true); // true = isPDF
         });
 
         ipcRenderer.on('navigate-to-url', (event, url) => {
@@ -749,6 +785,9 @@ class FlashSightReaderApp {
 
     applyBionicReadingToWebView(webview) {
         if (!webview || !this.bionicToggle.checked) return;
+
+        // Utiliser la fonction d'attente intelligente
+        this.waitForWebViewReady(webview, () => {
 
         // Version améliorée du script d'injection avec surveillance DOM
         const script = `
@@ -910,6 +949,7 @@ class FlashSightReaderApp {
         webview.executeJavaScript(script).catch(error => {
             // Error executing Flash Sight script handled silently
         });
+        }); // Fermeture de waitForWebViewReady
     }
 
     applyFlashSightToWelcomePage() {
@@ -983,7 +1023,9 @@ class FlashSightReaderApp {
     removeBionicReading() {
         const currentTab = this.tabManager.getCurrentTab();
         if (currentTab && currentTab.webview) {
-            const script = `
+            // Utiliser la fonction d'attente intelligente
+            this.waitForWebViewReady(currentTab.webview, () => {
+                const script = `
                 try {
                     // Arrêter l'observer si il existe
                     if (window.flashSightEngine && window.flashSightEngine.observer) {
@@ -999,9 +1041,10 @@ class FlashSightReaderApp {
                 } catch (error) {
                     // Error removing Flash Sight handled silently
                 }
-            `;
-            currentTab.webview.executeJavaScript(script).catch(error => {
-                // Error executing script handled silently
+                `;
+                currentTab.webview.executeJavaScript(script).catch(error => {
+                    // Error executing script handled silently
+                });
             });
         }
         
@@ -1167,6 +1210,173 @@ class FlashSightReaderApp {
         if (this.immersiveModeToggle) {
             this.immersiveModeToggle.checked = this.immersiveMode.isActive;
         }
+    }
+
+    /**
+     * Initialise un viewer PDF dans le conteneur spécifié
+     */
+    async initializePDFViewer(container, pdfPath) {
+        console.log('Initialisation du PDF viewer pour:', pdfPath);
+        
+        try {
+            // Vérifier si PDFViewer est déjà disponible
+            if (window.PDFViewer) {
+                console.log('PDFViewer déjà disponible, création directe');
+                this.createPDFViewer(container, pdfPath);
+                return;
+            }
+            
+            // Vérifier si le script est déjà en cours de chargement
+            if (window._pdfViewerLoading) {
+                console.log('PDFViewer en cours de chargement, attente...');
+                // Attendre que le script soit chargé
+                const checkInterval = setInterval(() => {
+                    if (window.PDFViewer) {
+                        clearInterval(checkInterval);
+                        console.log('PDFViewer maintenant disponible après attente');
+                        this.createPDFViewer(container, pdfPath);
+                    }
+                }, 100);
+                
+                // Timeout après 5 secondes
+                setTimeout(() => {
+                    clearInterval(checkInterval);
+                    if (!window.PDFViewer) {
+                        console.error('Timeout lors du chargement de PDFViewer');
+                        container.innerHTML = `
+                            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: red; flex-direction: column; text-align: center; padding: 20px;">
+                                <h3>⏱️ Timeout de chargement</h3>
+                                <p>Le module PDF met trop de temps à charger</p>
+                                <button onclick="location.reload()" style="margin-top: 10px; padding: 8px 16px; background: #007acc; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                    Recharger l'application
+                                </button>
+                            </div>
+                        `;
+                    }
+                }, 5000);
+                return;
+            }
+            
+            // Marquer comme en cours de chargement
+            window._pdfViewerLoading = true;
+            
+            // Créer un script pour charger le PDFViewer
+            const script = document.createElement('script');
+            script.src = './modules/PDFViewer.js';
+            
+            script.onload = () => {
+                console.log('Module PDFViewer chargé avec succès');
+                window._pdfViewerLoading = false;
+                this.createPDFViewer(container, pdfPath);
+            };
+            
+            script.onerror = (error) => {
+                console.error('Erreur lors du chargement du module PDFViewer:', error);
+                window._pdfViewerLoading = false;
+                container.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: red; flex-direction: column; text-align: center; padding: 20px;">
+                        <h3>❌ Module PDF non disponible</h3>
+                        <p>Impossible de charger le module PDFViewer.js</p>
+                        <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                            Fichier: ${pdfPath}
+                        </p>
+                        <button onclick="location.reload()" style="margin-top: 10px; padding: 8px 16px; background: #007acc; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            Recharger l'application
+                        </button>
+                    </div>
+                `;
+            };
+            
+            document.head.appendChild(script);
+            
+        } catch (error) {
+            console.error('Erreur lors de l\'initialisation du PDF viewer:', error);
+            container.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: red; flex-direction: column; text-align: center; padding: 20px;">
+                    <h3>❌ Erreur système</h3>
+                    <p>Erreur lors de l'initialisation: ${error.message}</p>
+                    <button onclick="location.reload()" style="margin-top: 10px; padding: 8px 16px; background: #007acc; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Recharger l'application
+                    </button>
+                </div>
+            `;
+        }
+    }
+    
+    /**
+     * Crée et configure une instance de PDFViewer
+     */
+    createPDFViewer(container, pdfPath) {
+        try {
+            console.log('Création de l\'instance PDFViewer pour:', pdfPath);
+            console.log('Container disponible:', !!container);
+            console.log('PDFViewer class disponible:', typeof PDFViewer);
+            
+            if (!container) {
+                throw new Error('Container non fourni pour PDFViewer');
+            }
+            
+            if (typeof PDFViewer === 'undefined') {
+                throw new Error('Classe PDFViewer non disponible');
+            }
+            
+            // Créer une nouvelle instance avec validation
+            const pdfViewer = new PDFViewer(container);
+            console.log('Instance PDFViewer créée avec succès');
+            
+            // Stocker la référence pour debug
+            container._pdfViewer = pdfViewer;
+            
+            // Charger le PDF
+            if (pdfPath) {
+                console.log('Chargement du PDF:', pdfPath);
+                pdfViewer.loadPDF(pdfPath).catch(error => {
+                    console.error('Erreur lors du chargement du PDF:', error);
+                    container.innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: red; flex-direction: column; text-align: center; padding: 20px;">
+                            <h3>❌ Erreur lors du chargement du PDF</h3>
+                            <p>${error.message}</p>
+                            <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                                Fichier: ${pdfPath}
+                            </p>
+                            <button onclick="this.parentElement.parentElement.innerHTML='<div style=\\'text-align: center; padding: 40px;\\'>Chargement annulé</div>'" 
+                                   style="margin-top: 10px; padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                Fermer
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+        } catch (error) {
+            console.error('Erreur lors de la création du PDFViewer:', error);
+            container.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: red; flex-direction: column; text-align: center; padding: 20px;">
+                    <h3>❌ Erreur de création</h3>
+                    <p>Impossible de créer le viewer PDF: ${error.message}</p>
+                    <button onclick="location.reload()" style="margin-top: 10px; padding: 8px 16px; background: #007acc; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Recharger l'application
+                    </button>
+                </div>
+            `;
+        }
+    }
+    
+    /**
+     * Charge un PDF de test pour démonstration
+     */
+    loadTestPDF() {
+        console.log('Chargement du PDF de test #1');
+        const testPath = 'document-a.md';
+        this.tabManager.createNewTab(testPath, '📄 Document A', true);
+    }
+    
+    /**
+     * Charge un deuxième PDF de test pour démonstration
+     */
+    loadTestPDF2() {
+        console.log('Chargement du PDF de test #2');
+        const testPath = 'document-b.md';
+        this.tabManager.createNewTab(testPath, '📄 Document B', true);
     }
 
     /**
@@ -1413,18 +1623,73 @@ class FlashSightReaderApp {
     }
 
     /**
+     * Attend que la WebView soit prête avant d'exécuter une fonction
+     */
+    waitForWebViewReady(webview, callback, maxAttempts = 10, currentAttempt = 0) {
+        if (!webview || !callback) return;
+
+        // Vérifier si on a atteint le maximum de tentatives
+        if (currentAttempt >= maxAttempts) {
+            console.warn('WebView toujours pas prête après', maxAttempts, 'tentatives');
+            return;
+        }
+
+        try {
+            // Vérifier si la WebView est attachée au DOM
+            if (!webview.offsetParent && !document.body.contains(webview)) {
+                // WebView pas dans le DOM
+                setTimeout(() => {
+                    this.waitForWebViewReady(webview, callback, maxAttempts, currentAttempt + 1);
+                }, 500);
+                return;
+            }
+
+            // Vérifier si la WebView a un WebContentsId
+            const webContentsId = webview.getWebContentsId();
+            if (!webContentsId || webContentsId <= 0) {
+                // WebContents pas encore créé
+                setTimeout(() => {
+                    this.waitForWebViewReady(webview, callback, maxAttempts, currentAttempt + 1);
+                }, 500);
+                return;
+            }
+
+            // Vérifier si la WebView a fini de charger
+            if (webview.isLoading && webview.isLoading()) {
+                // Encore en cours de chargement
+                setTimeout(() => {
+                    this.waitForWebViewReady(webview, callback, maxAttempts, currentAttempt + 1);
+                }, 500);
+                return;
+            }
+
+            // WebView prête, exécuter le callback
+            callback();
+
+        } catch (error) {
+            // WebView pas encore prête, réessayer
+            setTimeout(() => {
+                this.waitForWebViewReady(webview, callback, maxAttempts, currentAttempt + 1);
+            }, 500);
+        }
+    }
+
+    /**
      * Configure les analytics pour une webview (version simplifiée)
      */
     setupWebviewAnalytics(webview, tabId) {
         if (!webview || !this.readingAnalytics) return;
 
-        // Version ultra-simplifiée qui ne risque pas d'échouer
-        const script = `
-            window.simpleAnalytics = { wordsRead: 0, startTime: Date.now() };
-        `;
+        // Utiliser la fonction d'attente intelligente
+        this.waitForWebViewReady(webview, () => {
+            // Version ultra-simplifiée qui ne risque pas d'échouer
+            const script = `
+                window.simpleAnalytics = { wordsRead: 0, startTime: Date.now() };
+            `;
 
-        webview.executeJavaScript(script).catch(() => {
-            // Ignorer silencieusement les erreurs
+            webview.executeJavaScript(script).catch(() => {
+                // Ignorer silencieusement les erreurs
+            });
         });
     }
 
@@ -1434,31 +1699,34 @@ class FlashSightReaderApp {
     updateWebviewAnalytics(webview, tabId) {
         if (!webview || !this.readingAnalytics) return;
 
-        // Version ultra-simplifiée
-        const script = `
-            (function() {
-                try {
-                    const textContent = document.body.textContent || '';
-                    const words = textContent.trim().split(/\\s+/).filter(w => w.length > 0);
-                    const wordsCount = Math.min(words.length, 5000); // Limiter
-                    return { wordsRead: wordsCount, readingTime: 0, averageSpeed: 0, efficiency: 0 };
-                } catch (e) {
-                    return { wordsRead: 0, readingTime: 0, averageSpeed: 0, efficiency: 0 };
-                }
-            })();
-        `;
+        // Utiliser la fonction d'attente intelligente
+        this.waitForWebViewReady(webview, () => {
+            // Version ultra-simplifiée
+            const script = `
+                (function() {
+                    try {
+                        const textContent = document.body.textContent || '';
+                        const words = textContent.trim().split(/\\s+/).filter(w => w.length > 0);
+                        const wordsCount = Math.min(words.length, 5000); // Limiter
+                        return { wordsRead: wordsCount, readingTime: 0, averageSpeed: 0, efficiency: 0 };
+                    } catch (e) {
+                        return { wordsRead: 0, readingTime: 0, averageSpeed: 0, efficiency: 0 };
+                    }
+                })();
+            `;
 
-        webview.executeJavaScript(script).then(stats => {
-            if (stats && typeof stats === 'object' && stats.wordsRead > 0) {
-                this.readingAnalytics.metrics.wordsRead = stats.wordsRead;
-                // Calculer une vitesse approximative
-                const minutes = (Date.now() - this.readingAnalytics.metrics.sessionStartTime) / 60000;
-                if (minutes > 0) {
-                    this.readingAnalytics.metrics.averageSpeed = Math.round(stats.wordsRead / minutes);
+            webview.executeJavaScript(script).then(stats => {
+                if (stats && typeof stats === 'object' && stats.wordsRead > 0) {
+                    this.readingAnalytics.metrics.wordsRead = stats.wordsRead;
+                    // Calculer une vitesse approximative
+                    const minutes = (Date.now() - this.readingAnalytics.metrics.sessionStartTime) / 60000;
+                    if (minutes > 0) {
+                        this.readingAnalytics.metrics.averageSpeed = Math.round(stats.wordsRead / minutes);
+                    }
                 }
-            }
-        }).catch(() => {
-            // Ignorer silencieusement les erreurs
+            }).catch(() => {
+                // Ignorer silencieusement les erreurs
+            });
         });
     }
 
@@ -1467,6 +1735,15 @@ class FlashSightReaderApp {
      */
     resetWebviewAnalytics(webview, tabId) {
         if (!webview) return;
+
+        // Vérifier que la webview est prête
+        try {
+            if (!webview.getWebContentsId) {
+                return;
+            }
+        } catch (error) {
+            return;
+        }
 
         const script = `if (window.simpleAnalytics) { window.simpleAnalytics = { wordsRead: 0, startTime: Date.now() }; }`;
         webview.executeJavaScript(script).catch(() => {

@@ -1,0 +1,29 @@
+# Test de FlashSight avec PDF
+
+## Introduction
+
+Cette application démontre les capacités de FlashSight Reading pour améliorer la vitesse et la compréhension de lecture. Le système met en évidence la première partie des mots pour faciliter la lecture rapide.
+
+## Fonctionnalités principales
+
+- **Lecture accélérée** : Transforme automatiquement le texte pour une lecture plus rapide
+- **Intensité réglable** : Permet d'ajuster le niveau de transformation selon les préférences
+- **Support multi-format** : Compatible avec les sites web, PDFs et documents texte
+- **Thèmes personnalisables** : Interface claire ou sombre selon les préférences
+
+## Comment ça fonctionne
+
+L'algorithme FlashSight identifie automatiquement les mots importants et met en évidence leur début. Cette technique, inspirée de la méthode Bionic Reading, permet au cerveau de traiter l'information plus rapidement tout en maintenant une compréhension optimale du contenu.
+
+### Avantages scientifiques
+
+Les études montrent que cette méthode peut améliorer la vitesse de lecture de 20 à 40% tout en maintenant ou même en améliorant la compréhension. C'est particulièrement utile pour les personnes souffrant de dyslexie ou de difficultés de concentration.
+
+## Utilisation
+
+1. Ouvrez un document PDF avec le bouton "Ouvrir"
+2. Activez FlashSight avec le bouton ⚡ FlashSight
+3. Ajustez l'intensité selon vos préférences
+4. Profitez d'une lecture plus fluide et rapide
+
+Cette technologie révolutionnaire transforme votre expérience de lecture quotidienne.

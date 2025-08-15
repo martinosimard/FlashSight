@@ -1,6 +1,6 @@
 {
   "name": "flash-sight-app",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Application de lecture bionique basée sur Chromium pour sites web et PDFs",
   "main": "main.js",
   "scripts": {
@@ -20,7 +20,7 @@
   "author": "Votre Nom",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^37.2.4",
+    "electron": "^30.5.1",
     "electron-builder": "^25.2.4"
   },
   "dependencies": {

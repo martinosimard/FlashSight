@@ -1233,3 +1233,644 @@ svg {
 .error {
     color: var(--vscode-error);
 }
+
+/* =================================================================== */
+/* STYLES PDF VIEWER - Version 1.1.0 */
+/* =================================================================== */
+
+.pdf-viewer-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--theme-background, #ffffff);
+    color: var(--theme-text, #000000);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transition: var(--theme-transition, all 0.3s ease);
+}
+
+/* Barre d'outils PDF */
+.pdf-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: var(--theme-surface, #f5f5f5);
+    border-bottom: 1px solid var(--theme-border, #dee2e6);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.pdf-toolbar-left,
+.pdf-toolbar-center,
+.pdf-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pdf-toolbar-center {
+    flex: 1;
+    justify-content: center;
+}
+
+.pdf-toolbar-right {
+    flex-shrink: 0;
+}
+
+/* Boutons PDF */
+.pdf-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    background: var(--theme-primary, #007acc);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 36px;
+    min-height: 32px;
+}
+
+.pdf-btn:hover {
+    background: var(--vscode-button-hoverBackground, #1177bb);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.pdf-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.pdf-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--theme-text-secondary, #6c757d);
+}
+
+.pdf-btn.active {
+    background: var(--theme-accent, #28a745);
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+}
+
+/* Informations de page */
+.pdf-page-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    color: var(--theme-text, #000000);
+}
+
+.pdf-page-input {
+    width: 50px;
+    padding: 4px 6px;
+    border: 1px solid var(--theme-border, #dee2e6);
+    border-radius: 3px;
+    background: var(--theme-background, #ffffff);
+    color: var(--theme-text, #000000);
+    text-align: center;
+    font-size: 13px;
+}
+
+.pdf-page-input:focus {
+    outline: none;
+    border-color: var(--theme-primary, #007acc);
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.3);
+}
+
+/* Niveau de zoom */
+.pdf-zoom-level {
+    min-width: 50px;
+    text-align: center;
+    font-weight: 500;
+    color: var(--theme-text, #000000);
+    font-size: 13px;
+}
+
+/* Contrôle de taille de police */
+.pdf-font-size-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--theme-text, #000000);
+}
+
+.pdf-font-slider {
+    width: 80px;
+    height: 20px;
+    background: var(--theme-border, #dee2e6);
+    border-radius: 10px;
+    outline: none;
+    cursor: pointer;
+}
+
+.pdf-font-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--theme-primary, #007acc);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pdf-font-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.3);
+}
+
+.pdf-font-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--theme-primary, #007acc);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.pdf-font-slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.3);
+}
+
+/* Wrapper du contenu */
+.pdf-content-wrapper {
+    display: flex;
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Contenu PDF - Scroll amélioré */
+.pdf-text-content {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: var(--theme-background, #ffffff);
+    color: var(--theme-text, #000000);
+    line-height: 1.6;
+    font-size: 16px;
+    scroll-behavior: smooth;
+    height: 100%;
+    min-height: 0; /* Important pour flex */
+    position: relative;
+}
+
+/* Conteneur principal PDF pour assurer la hauteur */
+.pdf-viewer-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+}
+
+.pdf-content-wrapper {
+    display: flex;
+    flex: 1;
+    min-height: 0; /* Important pour le scroll */
+    position: relative;
+}
+
+/* Masquer la scrollbar par défaut */
+.pdf-text-content::-webkit-scrollbar {
+    display: none;
+}
+
+.pdf-text-content {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Page PDF - Thème adaptatif amélioré */
+.pdf-page-content {
+    max-width: 800px;
+    margin: 0 auto;
+    background: var(--theme-background, #ffffff);
+    color: var(--theme-text, #333333);
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transform-origin: top left;
+    transition: var(--theme-transition, all 0.3s ease);
+    min-height: 400px;
+}
+
+/* Assurer un bon contraste en thème clair */
+.theme-light .pdf-page-content {
+    background: #ffffff;
+    color: #2c3e50;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Assurer un bon contraste en thème sombre */
+.theme-dark .pdf-page-content {
+    background: #2d3748;
+    color: #e2e8f0;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.3);
+}
+
+.pdf-page-content h1 {
+    font-size: 28px;
+    color: var(--theme-primary, #007acc);
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--theme-primary, #007acc);
+    padding-bottom: 10px;
+}
+
+.pdf-page-content h2 {
+    font-size: 22px;
+    color: var(--theme-text, #000000);
+    margin: 24px 0 16px 0;
+    font-weight: 600;
+}
+
+.pdf-page-content h3 {
+    font-size: 18px;
+    color: var(--theme-text, #000000);
+    margin: 20px 0 12px 0;
+    font-weight: 600;
+}
+
+.pdf-page-content p {
+    margin-bottom: 16px;
+    text-align: justify;
+}
+
+.pdf-page-content ul {
+    margin: 16px 0;
+    padding-left: 24px;
+}
+
+.pdf-page-content li {
+    margin-bottom: 8px;
+}
+
+.pdf-page-footer {
+    text-align: center;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--theme-border, #dee2e6);
+    color: var(--theme-text-secondary, #6c757d);
+    font-size: 14px;
+}
+
+/* FlashSight dans PDF */
+.pdf-page-content .flashsight-word {
+    display: inline;
+}
+
+.pdf-page-content .flashsight-bold {
+    font-weight: bold;
+    color: inherit;
+}
+
+.pdf-page-content .flashsight-normal {
+    font-weight: normal;
+    color: inherit;
+    opacity: 0.85;
+}
+
+/* Indicateur de scroll personnalisé */
+.pdf-scroll-indicator {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    bottom: 8px;
+    width: 12px;
+    z-index: 10;
+}
+
+.pdf-scroll-track {
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pdf-scroll-track:hover {
+    background: rgba(0, 0, 0, 0.15);
+    width: 16px;
+    margin-left: -2px;
+}
+
+.pdf-scroll-thumb {
+    position: absolute;
+    left: 0;
+    right: 0;
+    background: var(--theme-primary, #007acc);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 20px;
+    opacity: 0.7;
+}
+
+.pdf-scroll-thumb:hover {
+    opacity: 1;
+    background: var(--vscode-button-hoverBackground, #1177bb);
+}
+
+/* État de chargement PDF */
+.pdf-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 20px;
+    color: var(--theme-text-secondary, #6c757d);
+}
+
+.pdf-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--theme-border, #dee2e6);
+    border-top: 4px solid var(--theme-primary, #007acc);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* État d'erreur PDF */
+.pdf-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 16px;
+    color: var(--theme-text, #000000);
+    text-align: center;
+    padding: 40px;
+}
+
+.pdf-error h3 {
+    color: var(--vscode-error, #f48771);
+    margin: 0;
+}
+
+.pdf-error .error-details {
+    font-size: 14px;
+    color: var(--theme-text-secondary, #6c757d);
+    font-family: monospace;
+    background: var(--theme-surface, #f5f5f5);
+    padding: 8px 12px;
+    border-radius: 4px;
+    border-left: 3px solid var(--vscode-error, #f48771);
+}
+
+/* THÈME SOMBRE PDF */
+.pdf-viewer-container.pdf-dark-theme {
+    background: #1a1a1a;
+    color: #ffffff;
+}
+
+.pdf-dark-theme .pdf-toolbar {
+    background: #2d2d2d;
+    border-bottom-color: #404040;
+}
+
+.pdf-dark-theme .pdf-page-input {
+    background: #3c3c3c;
+    border-color: #404040;
+    color: #ffffff;
+}
+
+.pdf-dark-theme .pdf-page-content {
+    background: #2d2d2d;
+    color: #ffffff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.pdf-dark-theme .pdf-page-content h1 {
+    color: #4fc3f7;
+    border-bottom-color: #4fc3f7;
+}
+
+.pdf-dark-theme .pdf-page-content h2,
+.pdf-dark-theme .pdf-page-content h3 {
+    color: #ffffff;
+}
+
+.pdf-dark-theme .pdf-page-footer {
+    border-top-color: #404040;
+    color: #adb5bd;
+}
+
+.pdf-dark-theme .pdf-scroll-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.pdf-dark-theme .pdf-scroll-track:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.pdf-dark-theme .pdf-scroll-thumb {
+    background: #4fc3f7;
+}
+
+.pdf-dark-theme .pdf-scroll-thumb:hover {
+    background: #29b6f6;
+}
+
+.pdf-dark-theme .pdf-font-slider {
+    background: #404040;
+}
+
+.pdf-dark-theme .pdf-font-slider::-webkit-slider-thumb {
+    background: #4fc3f7;
+}
+
+.pdf-dark-theme .pdf-font-slider::-webkit-slider-thumb:hover {
+    box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.3);
+}
+
+.pdf-dark-theme .pdf-font-slider::-moz-range-thumb {
+    background: #4fc3f7;
+}
+
+.pdf-dark-theme .pdf-font-slider::-moz-range-thumb:hover {
+    box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.3);
+}
+
+.pdf-dark-theme .pdf-error .error-details {
+    background: #3c3c3c;
+    color: #adb5bd;
+}
+
+/* Responsive design pour PDF */
+@media (max-width: 768px) {
+    .pdf-toolbar {
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+    }
+    
+    .pdf-toolbar-left,
+    .pdf-toolbar-center,
+    .pdf-toolbar-right {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .pdf-page-content {
+        padding: 20px;
+        margin: 0 12px;
+    }
+    
+    .pdf-text-content {
+        padding: 12px;
+    }
+    
+    .pdf-font-size-label {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .pdf-btn {
+        padding: 4px 8px;
+        font-size: 13px;
+        min-width: 32px;
+        min-height: 28px;
+    }
+    
+    .pdf-page-content {
+        padding: 16px;
+        margin: 0 8px;
+    }
+    
+    .pdf-page-content h1 {
+        font-size: 24px;
+    }
+    
+    .pdf-page-content h2 {
+        font-size: 20px;
+    }
+    
+    .pdf-page-content h3 {
+        font-size: 16px;
+    }
+}
+
+/* Styles spéciaux pour le bouton FlashSight dans PDF */
+.pdf-controls button#pdf-flashsight-toggle {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.pdf-controls button#pdf-flashsight-toggle:not(.active) {
+    background: #6b7280 !important;
+    color: #d1d5db !important;
+    box-shadow: none !important;
+}
+
+.pdf-controls button#pdf-flashsight-toggle.active {
+    background: var(--accent-color, #3b82f6) !important;
+    color: white !important;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.6) !important;
+    animation: pulse-flashsight 2s infinite;
+}
+
+.pdf-controls button#pdf-flashsight-toggle.active::before {
+    content: "⚡ ";
+    color: #fbbf24;
+    font-size: 14px;
+    margin-right: 4px;
+}
+
+@keyframes pulse-flashsight {
+    0%, 100% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.6); }
+    50% { box-shadow: 0 0 25px rgba(59, 130, 246, 0.8); }
+}
+
+.pdf-controls button#pdf-flashsight-toggle:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Styles FlashSight pour le contenu PDF - Version améliorée */
+.pdf-page-content .flashsight-word {
+    display: inline;
+}
+
+.pdf-page-content .flashsight-bold {
+    font-weight: 700;
+    color: var(--flashsight-bold-color, #1565c0);  /* Bleu plus foncé pour thème clair */
+}
+
+.pdf-page-content .flashsight-normal {
+    font-weight: 400;
+    color: var(--flashsight-normal-color, #424242);  /* Gris foncé pour thème clair */
+}
+
+/* Thème sombre pour FlashSight PDF - Couleurs améliorées */
+.theme-dark .pdf-page-content .flashsight-bold {
+    color: var(--flashsight-bold-color, #81c784);  /* Vert doux pour le thème sombre */
+}
+
+.theme-dark .pdf-page-content .flashsight-normal {
+    color: var(--flashsight-normal-color, #b0bec5);  /* Gris clair pour le thème sombre */
+}
+
+/* Amélioration de l'espacement des paragraphes PDF */
+.pdf-page-content p {
+    margin-bottom: 1.2em;
+    line-height: 1.6;
+    text-align: justify;
+}
+
+.pdf-page-content h1, 
+.pdf-page-content h2, 
+.pdf-page-content h3 {
+    margin-top: 1.5em;
+    margin-bottom: 0.8em;
+    color: var(--theme-primary);
+}
+
+.pdf-page-content h1 {
+    font-size: 1.6em;
+    border-bottom: 2px solid var(--theme-primary);
+    padding-bottom: 0.3em;
+}
+
+.pdf-page-content h2 {
+    font-size: 1.4em;
+}
+
+.pdf-page-content h3 {
+    font-size: 1.2em;
+}
+
+.pdf-page-content ul {
+    margin: 1em 0;
+    padding-left: 2em;
+}
+
+.pdf-page-content li {
+    margin-bottom: 0.5em;
+    line-height: 1.5;
+}
+
+.pdf-page-content strong {
+    color: var(--theme-primary);
+    font-weight: 600;
+}

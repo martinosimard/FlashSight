@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test PDF FlashSight</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #1177bb;
+        }
+        .flashsight-word {
+            display: inline;
+        }
+        .flashsight-bold {
+            font-weight: bold;
+        }
+        .flashsight-normal {
+            font-weight: normal;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 Test des Fonctionnalités FlashSight v1.1.0</h1>
+    
+    <div class="test-section">
+        <h2>📄 Test Visualiseur PDF</h2>
+        <p>Le nouveau visualiseur PDF intégré offre une expérience de lecture optimisée avec FlashSight.</p>
+        <button class="test-button" onclick="testPDFViewer()">Créer onglet PDF test</button>
+        <button class="test-button" onclick="openLocalPDF()">Ouvrir PDF local</button>
+    </div>
+
+    <div class="test-section">
+        <h2>🎨 Test Thèmes</h2>
+        <p>Le système de thèmes adaptatifs améliore l'expérience de lecture en PDF et sur le web.</p>
+        <button class="test-button" onclick="testThemes()">Basculer thème sombre</button>
+        <button class="test-button" onclick="testSepia()">Mode sépia</button>
+    </div>
+
+    <div class="test-section">
+        <h2>⚡ Test FlashSight</h2>
+        <p id="flashsight-test">Ceci est un texte de démonstration pour tester l'algorithme FlashSight. L'algorithme transforme automatiquement chaque mot en mettant en évidence les premières lettres pour améliorer la vitesse de lecture.</p>
+        <button class="test-button" onclick="applyFlashSight()">Appliquer FlashSight</button>
+        <button class="test-button" onclick="removeFlashSight()">Supprimer FlashSight</button>
+        <input type="range" id="intensity" min="0.1" max="0.8" step="0.1" value="0.5" onchange="updateIntensity()">
+        <span id="intensity-value">50%</span>
+    </div>
+
+    <div class="test-section">
+        <h2>🗂️ Test Historique d'URL</h2>
+        <p>Le dropdown d'historique fonctionne désormais sur tous les onglets.</p>
+        <button class="test-button" onclick="testHistory()">Ajouter URL test</button>
+        <button class="test-button" onclick="showHistory()">Afficher historique</button>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Test Analytics</h2>
+        <p>Les analytics de lecture suivent votre progression et vitesse.</p>
+        <div id="analytics-display">
+            <p>Temps de lecture: <span id="reading-time">0m 0s</span></p>
+            <p>Mots lus: <span id="words-read">0</span></p>
+            <p>Vitesse: <span id="reading-speed">0</span> mots/min</p>
+        </div>
+        <button class="test-button" onclick="updateAnalytics()">Mettre à jour analytics</button>
+    </div>
+
+    <script>
+        let currentIntensity = 0.5;
+
+        function testPDFViewer() {
+            // Simuler la création d'un onglet PDF
+            if (window.parent && window.parent.flashSightApp) {
+                const testPDFUrl = 'test-document.pdf';
+                window.parent.flashSightApp.tabManager.createNewTab(testPDFUrl, 'Document Test PDF');
+                alert('Onglet PDF créé ! Vérifiez les nouveaux contrôles de thème et de police.');
+            } else {
+                alert('Test PDF: Le visualiseur PDF intégré serait maintenant actif avec thèmes clair/sombre et contrôles de police.');
+            }
+        }
+
+        function openLocalPDF() {
+            if (window.parent && window.parent.require) {
+                const { ipcRenderer } = window.parent.require('electron');
+                ipcRenderer.invoke('open-pdf-dialog');
+            } else {
+                alert('Fonction disponible uniquement dans l\'application Electron.');
+            }
+        }
+
+        function testThemes() {
+            document.body.style.background = document.body.style.background === 'rgb(26, 26, 26)' ? '#ffffff' : '#1a1a1a';
+            document.body.style.color = document.body.style.color === 'rgb(255, 255, 255)' ? '#000000' : '#ffffff';
+            alert('Thème basculé ! Dans l\'app, cela fonctionne aussi pour les PDFs.');
+        }
+
+        function testSepia() {
+            document.body.style.background = '#f4f3e8';
+            document.body.style.color = '#5d4e37';
+            alert('Mode sépia activé ! Idéal pour la lecture prolongée.');
+        }
+
+        function applyFlashSight() {
+            const text = document.getElementById('flashsight-test');
+            if (text.querySelector('.flashsight-word')) return; // Déjà appliqué
+
+            const transformWord = (word) => {
+                const wordMatch = word.match(/^(\\W*)([\\w']+)(\\W*)$/);
+                if (!wordMatch || wordMatch[2].length < 3) return word;
+                
+                const [, prefix, cleanWord, suffix] = wordMatch;
+                const boldLength = Math.max(1, Math.min(cleanWord.length - 1, Math.ceil(cleanWord.length * currentIntensity)));
+                const boldPart = cleanWord.substring(0, boldLength);
+                const normalPart = cleanWord.substring(boldLength);
+                
+                return prefix + '<span class="flashsight-word"><span class="flashsight-bold">' + boldPart + '</span><span class="flashsight-normal">' + normalPart + '</span></span>' + suffix;
+            };
+
+            const words = text.textContent.split(/(\\s+)/);
+            const transformedWords = words.map(word => {
+                return /^\\s+$/.test(word) ? word : transformWord(word);
+            });
+            
+            text.innerHTML = transformedWords.join('');
+        }
+
+        function removeFlashSight() {
+            const text = document.getElementById('flashsight-test');
+            const flashsightWords = text.querySelectorAll('.flashsight-word');
+            flashsightWords.forEach(word => {
+                word.parentNode.replaceChild(document.createTextNode(word.textContent), word);
+            });
+        }
+
+        function updateIntensity() {
+            const slider = document.getElementById('intensity');
+            const value = document.getElementById('intensity-value');
+            currentIntensity = parseFloat(slider.value);
+            value.textContent = Math.round(currentIntensity * 100) + '%';
+            
+            // Réappliquer FlashSight avec la nouvelle intensité
+            removeFlashSight();
+            setTimeout(applyFlashSight, 100);
+        }
+
+        function testHistory() {
+            if (window.parent && window.parent.flashSightApp && window.parent.flashSightApp.urlHistory) {
+                const testUrls = [
+                    'https://exemple-test.com',
+                    'https://test-flashsight.org',
+                    'document-test.pdf'
+                ];
+                
+                testUrls.forEach((url, index) => {
+                    window.parent.flashSightApp.urlHistory.addUrl(url, `Test ${index + 1}`);
+                });
+                
+                alert('URLs test ajoutées à l\'historique ! Cliquez dans une barre d\'URL pour voir le dropdown.');
+            } else {
+                alert('Test historique: 3 URLs ont été ajoutées à l\'historique simulé.');
+            }
+        }
+
+        function showHistory() {
+            if (window.parent && window.parent.flashSightApp && window.parent.flashSightApp.urlHistory) {
+                const history = window.parent.flashSightApp.urlHistory.getHistory();
+                alert('Historique actuel: ' + history.length + ' entrées\\n' + 
+                      history.slice(0, 5).map(h => h.title + ' - ' + h.url).join('\\n'));
+            } else {
+                alert('Fonction disponible dans l\'application principale.');
+            }
+        }
+
+        function updateAnalytics() {
+            // Simulation d'analytics
+            const startTime = Date.now() - (Math.random() * 300000); // 0-5 minutes
+            const wordsInText = document.body.textContent.split(/\\s+/).length;
+            const readingTime = Date.now() - startTime;
+            const minutes = Math.floor(readingTime / 60000);
+            const seconds = Math.floor((readingTime % 60000) / 1000);
+            const speed = Math.round(wordsInText / (readingTime / 60000));
+
+            document.getElementById('reading-time').textContent = minutes + 'm ' + seconds + 's';
+            document.getElementById('words-read').textContent = wordsInText;
+            document.getElementById('reading-speed').textContent = speed;
+
+            alert('Analytics mises à jour ! Dans l\'app, cela se fait automatiquement.');
+        }
+
+        // Appliquer FlashSight au chargement
+        window.addEventListener('load', () => {
+            setTimeout(applyFlashSight, 1000);
+        });
+    </script>
+</body>
+</html>
