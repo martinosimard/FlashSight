@@ -16,12 +16,14 @@
     <script src="modules/LazyFlashSightTransform.js"></script>
     <script src="modules/AccessibilityManager.js"></script>
     <script src="modules/ImmersiveMode.js"></script>
-    <script src="modules/ReadingAnalytics.js"></script>
     <script src="modules/ErrorHandler.js"></script>
     <script src="modules/ThemeManager.js"></script>
     <script src="modules/SimpleUrlHistory.js"></script>
     <script src="modules/UrlHistoryDropdown.js"></script>
     <script src="modules/PDFViewer.js"></script>
+    <script src="modules/ContextMenu-simple.js"></script>
+    <!-- <script src="modules/ContextMenu-debug.js"></script> -->
+    <!-- <script src="simple-menu-test.js"></script> -->
 </head>
 <body>
     <div id="app">
@@ -107,38 +109,6 @@
                                 <span>Chargement adaptatif</span>
                             </label>
                             <small>Optimise les performances pour gros documents</small>
-                        </div>
-                    </div>
-                </details>
-
-                <!-- Section Analytics -->
-                <details class="sidebar-section">
-                    <summary class="section-header">
-                        <span class="section-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
-                        </span>
-                        <span class="section-title">Analytics Lecture</span>
-                    </summary>
-                    <div class="section-content">
-                        <div class="stat-item">
-                            <span class="stat-label">Temps de lecture:</span>
-                            <span id="readingTime" class="stat-value">0min</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Mots lus:</span>
-                            <span id="wordsRead" class="stat-value">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Vitesse (mpm):</span>
-                            <span id="readingSpeed" class="stat-value">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Efficacité:</span>
-                            <span id="readingEfficiency" class="stat-value">0%</span>
-                        </div>
-                        <div class="control-group">
-                            <button id="resetAnalyticsButton" class="secondary-button">🔄 Reset Session</button>
-                            <button id="exportAnalyticsButton" class="secondary-button">📤 Export</button>
                         </div>
                     </div>
                 </details>

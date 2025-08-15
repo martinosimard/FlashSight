@@ -62,6 +62,60 @@ ipcMain.handle('open-pdf-dialog', async () => {
   return await openPDF();
 });
 
+// Gestionnaire pour afficher le menu contextuel
+ipcMain.handle('show-context-menu', async (event, options) => {
+  const { Menu } = require('electron');
+  
+  const template = [
+    {
+      label: 'Activer/Désactiver FlashSight',
+      click: () => {
+        mainWindow.webContents.send('context-menu-action', 'toggle-flashsight');
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Zoom +',
+      click: () => {
+        mainWindow.webContents.send('context-menu-action', 'zoom-in');
+      }
+    },
+    {
+      label: 'Zoom -',
+      click: () => {
+        mainWindow.webContents.send('context-menu-action', 'zoom-out');
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Intensité +',
+      click: () => {
+        mainWindow.webContents.send('context-menu-action', 'intensity-up');
+      }
+    },
+    {
+      label: 'Intensité -',
+      click: () => {
+        mainWindow.webContents.send('context-menu-action', 'intensity-down');
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Mode Immersif',
+      click: () => {
+        mainWindow.webContents.send('context-menu-action', 'immersive-mode');
+      }
+    }
+  ];
+  
+  const menu = Menu.buildFromTemplate(template);
+  menu.popup({
+    window: mainWindow,
+    x: options.x,
+    y: options.y
+  });
+});
+
 // Gestionnaire pour basculer les DevTools
 ipcMain.handle('toggle-dev-console', async () => {
   if (mainWindow) {

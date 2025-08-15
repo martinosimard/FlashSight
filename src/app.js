@@ -113,6 +113,9 @@ class TabManager {
             webviewContainer.innerHTML = `
                 <webview id="webview-${tabId}" 
                          src="${webviewUrl}"
+                         nodeintegration="true"
+                         nodeintegrationinsubframes="true"
+                         allowpopups="true"
                          style="width: 100%; height: 100%;">
                 </webview>
             `;
@@ -347,7 +350,6 @@ class FlashSightReaderApp {
         this.accessibilityManager = new AccessibilityManager(this.stateManager);
         this.themeManager = new ThemeManager(this.stateManager);
         this.immersiveMode = new ImmersiveMode(this.stateManager, this.accessibilityManager);
-        this.readingAnalytics = new ReadingAnalytics(this.stateManager);
         this.errorHandler = new ErrorHandler(this.stateManager, this.accessibilityManager);
         
         this.urlHistory = null;
@@ -355,7 +357,6 @@ class FlashSightReaderApp {
         this.initializeHistoryModules();
         
         this.lazyTransform = null;
-        this.lastAnalyticsUpdate = 0;
         
         // Rendre accessible globalement AVANT d'initialiser TabManager
         window.flashSightApp = this;
@@ -363,6 +364,10 @@ class FlashSightReaderApp {
 
         this.initializeElements();
         this.initializeDefaultValues();
+        
+        // Initialiser le menu contextuel APRÈS les éléments DOM
+        this.contextMenu = new ContextMenu(this);
+        
         this.setupEventListeners();
         this.setupIpcListeners();
         this.setupStateSubscriptions();
@@ -513,6 +518,11 @@ class FlashSightReaderApp {
         this.dialogUrlInput = document.getElementById('dialog-url-input');
         this.dialogOk = document.getElementById('dialog-ok');
         this.dialogCancel = document.getElementById('dialog-cancel');
+        
+        // Debug logs pour vérifier les éléments
+        if (!this.sidebarToggle) {
+            console.error('FlashSight: sidebarToggle non trouvé');
+        }
         this.zoomSlider = document.getElementById('zoomSlider');
         this.zoomValue = document.getElementById('zoomValue');
         this.zoomInButton = document.getElementById('zoomInButton');
@@ -525,12 +535,6 @@ class FlashSightReaderApp {
         this.accessibilityToggle = document.getElementById('accessibilityToggle');
         this.immersiveModeToggle = document.getElementById('immersiveModeToggle');
         this.lazyLoadingToggle = document.getElementById('lazyLoadingToggle');
-        this.readingTime = document.getElementById('readingTime');
-        this.wordsRead = document.getElementById('wordsRead');
-        this.readingSpeed = document.getElementById('readingSpeed');
-        this.readingEfficiency = document.getElementById('readingEfficiency');
-        this.resetAnalyticsButton = document.getElementById('resetAnalyticsButton');
-        this.exportAnalyticsButton = document.getElementById('exportAnalyticsButton');
         this.cacheStats = document.getElementById('cacheStats');
         this.resetCacheButton = document.getElementById('resetCacheButton');
     }
@@ -557,10 +561,22 @@ class FlashSightReaderApp {
             this.sidebarToggle.addEventListener('click', () => {
                 const sidebar = document.getElementById('sidebar');
                 if (sidebar) {
-                    sidebar.classList.toggle('collapsed');
-                    // Mettre à jour l'attribut aria-pressed pour l'accessibilité
-                    const isCollapsed = sidebar.classList.contains('collapsed');
-                    this.sidebarToggle.setAttribute('aria-pressed', !isCollapsed);
+                    const isCurrentlyCollapsed = sidebar.classList.contains('collapsed');
+                    
+                    if (isCurrentlyCollapsed) {
+                        // Ouvrir la sidebar
+                        sidebar.classList.remove('collapsed');
+                        sidebar.style.width = '300px';
+                        sidebar.style.transform = 'translateX(0)';
+                        sidebar.style.display = 'flex';
+                        this.sidebarToggle.setAttribute('aria-pressed', 'true');
+                    } else {
+                        // Fermer la sidebar
+                        sidebar.classList.add('collapsed');
+                        sidebar.style.width = '0';
+                        sidebar.style.transform = 'translateX(-300px)';
+                        this.sidebarToggle.setAttribute('aria-pressed', 'false');
+                    }
                 }
             });
         }
@@ -668,8 +684,6 @@ class FlashSightReaderApp {
             }, 200);
         });
 
-        this.resetAnalyticsButton?.addEventListener('click', () => this.resetAllAnalytics());
-        this.exportAnalyticsButton?.addEventListener('click', () => this.exportAnalytics());
         this.resetCacheButton?.addEventListener('click', () => this.clearCache());
     }
     
@@ -703,8 +717,10 @@ class FlashSightReaderApp {
                 }, 500);
             }
             
-            // Initialiser les analytics pour cette webview
-            this.setupWebviewAnalytics(webview, tabId);
+            // Ajouter le menu contextuel à la WebView
+            if (this.contextMenu) {
+                this.contextMenu.attachToWebView(webview);
+            }
         });
 
         webview.addEventListener('did-stop-loading', () => {
@@ -713,11 +729,6 @@ class FlashSightReaderApp {
                     this.applyBionicReadingToWebView(webview);
                 }, 1000);
             }
-            
-            // Mettre à jour les analytics avec le nouveau contenu (avec attente intelligente)
-            this.waitForWebViewReady(webview, () => {
-                this.updateWebviewAnalytics(webview, tabId);
-            });
         });
 
         // Réappliquer Flash Sight après navigation
@@ -735,9 +746,6 @@ class FlashSightReaderApp {
             
             // Mettre à jour l'affichage du cache
             this.updateCacheDisplay();
-            
-            // Reset et redémarrer les analytics pour la nouvelle page
-            this.resetWebviewAnalytics(webview, tabId);
             
             // Réappliquer Flash Sight après navigation
             if (this.bionicToggle.checked) {
@@ -1427,12 +1435,6 @@ class FlashSightReaderApp {
         // Configurer le lazy loading
         this.setupLazyLoading();
         
-        // Démarrer les analytics
-        this.readingAnalytics.startReading();
-        
-        // Mettre à jour l'affichage analytics périodiquement
-        this.startAnalyticsUpdater();
-        
         // Mettre à jour l'affichage du cache
         this.updateCacheDisplay();
         
@@ -1449,54 +1451,6 @@ class FlashSightReaderApp {
         } else if (!enabled && this.lazyTransform) {
             this.lazyTransform.disconnect();
             this.lazyTransform = null;
-        }
-    }
-
-    /**
-     * Démarre la mise à jour périodique des analytics
-     */
-    startAnalyticsUpdater() {
-        setInterval(() => {
-            this.updateAnalyticsDisplay();
-            this.updateCacheDisplay();
-        }, 5000); // Mise à jour toutes les 5 secondes
-    }
-
-    /**
-     * Met à jour l'affichage des analytics
-     */
-    updateAnalyticsDisplay() {
-        if (!this.readingAnalytics) return;
-
-        // Récupérer les stats depuis la webview active si possible (avec throttling)
-        const currentTab = this.tabManager.getCurrentTab();
-        if (currentTab && currentTab.webview) {
-            // Éviter les appels trop fréquents
-            const now = Date.now();
-            if (!this.lastAnalyticsUpdate || now - this.lastAnalyticsUpdate > 2000) {
-                this.lastAnalyticsUpdate = now;
-                this.updateWebviewAnalytics(currentTab.webview, currentTab.id);
-            }
-        }
-
-        const stats = this.readingAnalytics.getDetailedStats();
-        
-        if (this.readingTime) {
-            const minutes = Math.floor(stats.readingTime / 60000);
-            const seconds = Math.floor((stats.readingTime % 60000) / 1000);
-            this.readingTime.textContent = `${minutes}m ${seconds}s`;
-        }
-        
-        if (this.wordsRead) {
-            this.wordsRead.textContent = stats.wordsRead.toString();
-        }
-        
-        if (this.readingSpeed) {
-            this.readingSpeed.textContent = stats.averageSpeed.toString();
-        }
-        
-        if (this.readingEfficiency) {
-            this.readingEfficiency.textContent = stats.efficiency + '%';
         }
     }
 
@@ -1666,149 +1620,17 @@ class FlashSightReaderApp {
     }
 
     /**
-     * Configure les analytics pour une webview (version simplifiée)
-     */
-    setupWebviewAnalytics(webview, tabId) {
-        if (!webview || !this.readingAnalytics) return;
-
-        // Utiliser la fonction d'attente intelligente
-        this.waitForWebViewReady(webview, () => {
-            // Version ultra-simplifiée qui ne risque pas d'échouer
-            const script = `
-                window.simpleAnalytics = { wordsRead: 0, startTime: Date.now() };
-            `;
-
-            webview.executeJavaScript(script).catch(() => {
-                // Ignorer silencieusement les erreurs
-            });
-        });
-    }
-
-    /**
-     * Met à jour les analytics depuis une webview (version simplifiée)
-     */
-    updateWebviewAnalytics(webview, tabId) {
-        if (!webview || !this.readingAnalytics) return;
-
-        // Utiliser la fonction d'attente intelligente
-        this.waitForWebViewReady(webview, () => {
-            // Version ultra-simplifiée
-            const script = `
-                (function() {
-                    try {
-                        const textContent = document.body.textContent || '';
-                        const words = textContent.trim().split(/\\s+/).filter(w => w.length > 0);
-                        const wordsCount = Math.min(words.length, 5000); // Limiter
-                        return { wordsRead: wordsCount, readingTime: 0, averageSpeed: 0, efficiency: 0 };
-                    } catch (e) {
-                        return { wordsRead: 0, readingTime: 0, averageSpeed: 0, efficiency: 0 };
-                    }
-                })();
-            `;
-
-            webview.executeJavaScript(script).then(stats => {
-                if (stats && typeof stats === 'object' && stats.wordsRead > 0) {
-                    this.readingAnalytics.metrics.wordsRead = stats.wordsRead;
-                    // Calculer une vitesse approximative
-                    const minutes = (Date.now() - this.readingAnalytics.metrics.sessionStartTime) / 60000;
-                    if (minutes > 0) {
-                        this.readingAnalytics.metrics.averageSpeed = Math.round(stats.wordsRead / minutes);
-                    }
-                }
-            }).catch(() => {
-                // Ignorer silencieusement les erreurs
-            });
-        });
-    }
-
-    /**
-     * Reset les analytics pour une nouvelle page (version simplifiée)
-     */
-    resetWebviewAnalytics(webview, tabId) {
-        if (!webview) return;
-
-        // Vérifier que la webview est prête
-        try {
-            if (!webview.getWebContentsId) {
-                return;
-            }
-        } catch (error) {
-            return;
-        }
-
-        const script = `if (window.simpleAnalytics) { window.simpleAnalytics = { wordsRead: 0, startTime: Date.now() }; }`;
-        webview.executeJavaScript(script).catch(() => {
-            // Ignorer les erreurs
-        });
-    }
-
-    /**
-     * Reset complètement toutes les analytics
-     */
-    resetAllAnalytics() {
-        // Reset du module principal
-        if (this.readingAnalytics) {
-            this.readingAnalytics.resetSession();
-        }
-
-        // Reset de toutes les webviews ouvertes
-        this.tabManager.tabs.forEach((tab, tabId) => {
-            if (tab.webview) {
-                this.resetWebviewAnalytics(tab.webview, tabId);
-            }
-        });
-
-        // Mise à jour immédiate de l'affichage
-        setTimeout(() => {
-            this.updateAnalyticsDisplay();
-        }, 100);
-
-        this.showNotification('Analytics remises à zéro', 'success');
-    }
-
-    /**
-     * Exporte les analytics
-     */
-    exportAnalytics() {
-        try {
-            const data = this.readingAnalytics.exportStats();
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `flashsight-analytics-${Date.now()}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            
-            this.showNotification('Analytics exportées avec succès', 'success');
-        } catch (error) {
-            // Error exporting analytics handled silently
-            this.showNotification('Erreur lors de l\'export', 'error');
-        }
-    }
-
-    /**
      * Améliore la transformation Flash Sight avec les nouvelles fonctionnalités
      */
     forceBionicReading() {
         const currentTab = this.tabManager.getCurrentTab();
         if (currentTab && currentTab.webview && this.stateManager.getState('enabled')) {
-            // Enregistrer la transformation dans les analytics
-            if (this.readingAnalytics) {
-                this.readingAnalytics.recordTransformation();
-            }
-            
             // Appliquer avec lazy loading si activé
             if (this.stateManager.getState('performance.lazyLoading') && this.lazyTransform) {
                 this.applyBionicReadingWithLazyLoading(currentTab.webview);
             } else {
                 this.applyBionicReadingToWebView(currentTab.webview);
             }
-            
-            // Mettre à jour les analytics après transformation
-            setTimeout(() => {
-                this.updateWebviewAnalytics(currentTab.webview, currentTab.id);
-            }, 1000);
         }
         
         // Appliquer aussi aux pages d'accueil
@@ -1938,10 +1760,6 @@ class FlashSightReaderApp {
      * Nettoie les ressources lors de la fermeture
      */
     destroy() {
-        if (this.readingAnalytics) {
-            this.readingAnalytics.destroy();
-        }
-        
         if (this.errorHandler) {
             this.errorHandler.destroy();
         }

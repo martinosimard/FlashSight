@@ -112,35 +112,6 @@
     stroke: var(--vscode-text);
 }
 
-/* Styles pour les nouvelles fonctionnalités */
-.stat-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 4px 0;
-    font-size: 12px;
-}
-
-.stat-label {
-    color: var(--vscode-text-secondary);
-}
-
-.stat-value {
-    color: var(--vscode-text);
-    font-weight: 500;
-}
-
-.stat-value.updating {
-    color: var(--vscode-accent);
-    animation: pulse 0.3s ease;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-
 /* Styles pour les notifications */
 .notification {
     position: fixed;
